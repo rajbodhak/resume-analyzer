@@ -1,6 +1,6 @@
 'use client';
 
-import Navbar from "../Navbar";
+import Navbar from "./Navbar";
 
 export default function NavbarWrapper() {
     return (
@@ -18,3 +18,4 @@ export default function NavbarWrapper() {
         />
     );
 }
+
