@@ -1,4 +1,4 @@
-import { PDFParse } from 'pdf-parse';
+import pdf from "pdf-parse";
 import mammoth from 'mammoth';
 
 export async function parseResume(file: Buffer, fileType: string): Promise<string> {
@@ -6,17 +6,23 @@ export async function parseResume(file: Buffer, fileType: string): Promise<strin
 
     switch (fileType) {
         case "application/pdf": {
-            const parser = new PDFParse({ data: file });
-            const textResult = await parser.getText();
-            if (typeof (parser as any).destroy === 'function') {
-                await (parser as any).destroy();
+            try {
+                const data = await pdf(file);
+                return data.text;
+            } catch (error) {
+                console.error("PDF parsing error:", error);
+                throw new Error(`Failed to parse PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
             }
-            return textResult.text;
         }
 
         case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document': {
-            const result = await mammoth.extractRawText({ buffer: file });
-            return result.value;
+            try {
+                const result = await mammoth.extractRawText({ buffer: file });
+                return result.value;
+            } catch (error) {
+                console.error("DOCX parsing error:", error);
+                throw new Error(`Failed to parse DOCX: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
         }
 
         default:
