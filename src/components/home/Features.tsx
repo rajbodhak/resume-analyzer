@@ -1,8 +1,14 @@
-import React from 'react';
+'use client';
+
+import React, { useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sparkles, FileSearch, Target, TrendingUp } from 'lucide-react';
+import { motion, useInView } from 'framer-motion';
 
 const Features = () => {
+    const ref = useRef(null);
+    const isInView = useInView(ref, { once: true, margin: "-100px" });
+
     const features = [
         {
             icon: <Sparkles className="size-5" />,
@@ -27,35 +33,46 @@ const Features = () => {
     ];
 
     return (
-        <section className="relative w-full bg-[#0a0a0a] px-4 py-24 md:px-6" id='features'>
+        <section ref={ref} className="relative min-h-screen w-full bg-[#0a0a0a] px-4 py-24 md:px-6">
             <div className="container mx-auto max-w-6xl">
                 {/* Section Header */}
-                <div className="mb-16 text-center">
+                <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+                    transition={{ duration: 0.6 }}
+                    className="mb-16 text-center"
+                >
                     <h2 className="mb-4 text-3xl font-bold text-white md:text-4xl lg:text-5xl">
                         Powerful Features
                     </h2>
                     <p className="mx-auto max-w-2xl text-muted-foreground">
                         Everything you need to craft a resume that stands out and gets you noticed by recruiters.
                     </p>
-                </div>
+                </motion.div>
 
                 {/* Features Grid */}
                 <div className="grid gap-6 md:grid-cols-2">
                     {features.map((feature, index) => (
-                        <Card
+                        <motion.div
                             key={index}
-                            className="border-border/50 bg-card/50 backdrop-blur-sm transition-all hover:border-border hover:bg-card/80"
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+                            transition={{ duration: 0.5, delay: index * 0.1 }}
                         >
-                            <CardHeader>
-                                <div className="mb-2 flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                                    {feature.icon}
-                                </div>
-                                <CardTitle className="text-xl">{feature.title}</CardTitle>
-                                <CardDescription className="text-base">
-                                    {feature.description}
-                                </CardDescription>
-                            </CardHeader>
-                        </Card>
+                            <Card
+                                className="border-border/50 bg-card/50 backdrop-blur-sm transition-all hover:border-border hover:bg-card/80"
+                            >
+                                <CardHeader>
+                                    <div className="mb-2 flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                        {feature.icon}
+                                    </div>
+                                    <CardTitle className="text-xl">{feature.title}</CardTitle>
+                                    <CardDescription className="text-base">
+                                        {feature.description}
+                                    </CardDescription>
+                                </CardHeader>
+                            </Card>
+                        </motion.div>
                     ))}
                 </div>
             </div>
