@@ -39,7 +39,7 @@ const HowItWorks = () => {
     ];
 
     return (
-        <section ref={ref} className="relative w-full bg-[#0a0a0a] px-4 py-24 md:px-6">
+        <section ref={ref} className="relative w-full bg-[#0a0a0a] px-4 py-24 md:px-6" id='howItWorks'>
             <div className="container mx-auto max-w-6xl">
                 {/* Section Header */}
                 <motion.div
