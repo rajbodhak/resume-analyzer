@@ -1,3 +1,8 @@
+import dotenv from "dotenv";
+import path from "path";
+
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import {
     RESUME_ANALYSIS_SYSTEM_PROMPT,
@@ -31,8 +36,9 @@ export async function analyzeResume(resumeText: string, jobDescription?: string)
         });
 
         let userPrompt: string;
+        const isJobMatch = jobDescription && jobDescription.trim().length > 20;
 
-        if (jobDescription && jobDescription.trim().length > 20) {
+        if (isJobMatch) {
             // Job match analysis
             userPrompt = fillPromptTemplate(JOB_MATCH_ANALYSIS_PROMPT, {
                 resumeText,
@@ -73,14 +79,25 @@ export async function analyzeResume(resumeText: string, jobDescription?: string)
             throw new Error("AI returned invalid JSON format");
         }
 
-        // Validate required fields
-        if (!analysisData.overallScore || !analysisData.summary) {
-            throw new Error("AI response missing required fields");
+        // Validate required fields based on analysis type
+        if (isJobMatch) {
+            // Job match requires: matchScore, verdict, summary
+            if (!analysisData.matchScore || !analysisData.verdict || !analysisData.summary) {
+                console.error("Missing job match fields. Received:", analysisData);
+                throw new Error("AI response missing required job match fields");
+            }
+        } else {
+            // Resume analysis requires: overallScore, summary
+            if (!analysisData.overallScore || !analysisData.summary) {
+                console.error("Missing resume analysis fields. Received:", analysisData);
+                throw new Error("AI response missing required resume analysis fields");
+            }
         }
 
         return {
             success: true,
             data: analysisData,
+            analysisType: isJobMatch ? 'job-match' : 'resume-analysis',
         };
 
     } catch (error) {
