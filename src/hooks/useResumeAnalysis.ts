@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { AnalysisResult } from '../../types/analysis';
+import { AnalysisResult } from '../types/analysis';
 
 export function useResumeAnalysis() {
     const [file, setFile] = useState<File | null>(null);
