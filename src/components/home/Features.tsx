@@ -33,7 +33,7 @@ const Features = () => {
     ];
 
     return (
-        <section ref={ref} className="relative min-h-screen w-full bg-[#0a0a0a] px-4 py-24 md:px-6" id="features">
+        <section ref={ref} className="relative  w-full bg-[#0a0a0a] px-4 py-24 md:px-6" id="features">
             <div className="container mx-auto max-w-6xl">
                 {/* Section Header */}
                 <motion.div
