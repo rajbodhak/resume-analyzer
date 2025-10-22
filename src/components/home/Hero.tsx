@@ -15,11 +15,6 @@ const Hero = () => {
         >
             <div className="absolute inset-0 z-0" />
 
-            {/* Navbar on top of ripple effect */}
-            <div className="relative z-50 w-full">
-                <NavbarWrapper />
-            </div>
-
             <div className="mt-40 w-full px-4">
                 <motion.h2
                     initial={{ opacity: 0, y: 20 }}
