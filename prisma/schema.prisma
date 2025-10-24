@@ -14,34 +14,29 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Authentication
-  email         String  @unique
-  passwordHash  String?
-  emailVerified Boolean @default(false)
-
-  // OAuth fields 
-  googleId String? @unique
-  githubId String? @unique
+  email         String    @unique
+  emailVerified DateTime?
+  password      String? // hashed password
+  image         String?
 
   // Profile
-  name         String?
-  profileImage String?
-  phoneNumber  String?
-
-  // User preferences
+  name              String?
+  phoneNumber       String?
   industry          String?
   targetRole        String?
-  experienceLevel   String? // junior, mid, senior, lead
+  experienceLevel   String?
   preferredLocation String?
 
   // Usage tracking
   analysesCount    Int       @default(0)
   lastAnalysisAt   DateTime?
-  subscriptionTier String    @default("free") // free, pro, enterprise
-  creditsRemaining Int       @default(5) // for free tier limits
+  subscriptionTier String    @default("free")
+  creditsRemaining Int       @default(5)
 
   // Relations
   analyses     Analysis[]
   savedResumes SavedResume[]
+  accounts     Account[]
   sessions     Session[]
 
   @@index([email])
@@ -67,23 +62,17 @@ model Analysis {
   improvements       Json
 
   // Optional
-  coverLetter String? @db.Text
-
-  // Analysis metadata
+  coverLetter  String? @db.Text
   analysisType String? // 'job-match' or 'resume-analysis'
 
   // Tracking
-  userId    String?
-  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  sessionId String?
-  session   Session? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([createdAt])
-  @@index([sessionId])
   @@index([userId])
 }
 
-// Optional: For storing user's resumes
 model SavedResume {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
@@ -94,26 +83,49 @@ model SavedResume {
 
   fileName   String
   resumeText String  @db.Text
-  fileUrl    String? // if storing files in cloud storage
+  fileUrl    String?
   isDefault  Boolean @default(false)
-  title      String? // e.g., "Software Engineer Resume v2"
+  title      String?
 
   @@index([userId])
   @@index([createdAt])
 }
 
-// Optional: For managing user sessions
-model Session {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  expiresAt DateTime
+// NextAuth Models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
 
-  userId String?
-  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  sessionToken String     @unique
-  analyses     Analysis[]
-
-  @@index([sessionToken])
+  @@unique([provider, providerAccountId])
   @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
 }
