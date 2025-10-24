@@ -8,6 +8,46 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+model User {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Authentication
+  email         String  @unique
+  passwordHash  String?
+  emailVerified Boolean @default(false)
+
+  // OAuth fields 
+  googleId String? @unique
+  githubId String? @unique
+
+  // Profile
+  name         String?
+  profileImage String?
+  phoneNumber  String?
+
+  // User preferences
+  industry          String?
+  targetRole        String?
+  experienceLevel   String? // junior, mid, senior, lead
+  preferredLocation String?
+
+  // Usage tracking
+  analysesCount    Int       @default(0)
+  lastAnalysisAt   DateTime?
+  subscriptionTier String    @default("free") // free, pro, enterprise
+  creditsRemaining Int       @default(5) // for free tier limits
+
+  // Relations
+  analyses     Analysis[]
+  savedResumes SavedResume[]
+  sessions     Session[]
+
+  @@index([email])
+  @@index([createdAt])
+}
+
 model Analysis {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
@@ -29,10 +69,51 @@ model Analysis {
   // Optional
   coverLetter String? @db.Text
 
+  // Analysis metadata
+  analysisType String? // 'job-match' or 'resume-analysis'
+
   // Tracking
   userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   sessionId String?
+  session   Session? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
 
   @@index([createdAt])
   @@index([sessionId])
+  @@index([userId])
+}
+
+// Optional: For storing user's resumes
+model SavedResume {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  fileName   String
+  resumeText String  @db.Text
+  fileUrl    String? // if storing files in cloud storage
+  isDefault  Boolean @default(false)
+  title      String? // e.g., "Software Engineer Resume v2"
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// Optional: For managing user sessions
+model Session {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  sessionToken String     @unique
+  analyses     Analysis[]
+
+  @@index([sessionToken])
+  @@index([userId])
 }
