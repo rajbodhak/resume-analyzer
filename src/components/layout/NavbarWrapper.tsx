@@ -10,7 +10,7 @@ export default function NavbarWrapper() {
             signInText="Sign In"
             ctaText="Get Started"
             onSignInClick={() => {
-                window.location.href = '/signin';
+                window.location.href = '/auth/signin';
             }}
             onCtaClick={() => {
                 window.location.href = '/upload';
