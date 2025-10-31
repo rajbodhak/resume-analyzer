@@ -38,6 +38,10 @@ export interface NavbarProps {
     onSignInClick?: () => void;
     onCtaClick?: () => void;
     className?: string;
+    isAuthenticated?: boolean;
+    dashboardText?: string;
+    dashboardHref?: string;
+    onDashboardClick?: () => void;
 }
 
 export default function Navbar({
@@ -50,7 +54,11 @@ export default function Navbar({
     ctaHref = '#get-started',
     onSignInClick,
     onCtaClick,
+    onDashboardClick,
     className = '',
+    isAuthenticated = false,
+    dashboardText = 'Dashboard',
+    dashboardHref = '/dashboard',
 }: NavbarProps) {
     return (
         <header className={`fixed top-0 left-0 right-0 z-50 w-full px-4 md:px-6 backdrop-blur-md bg-background/80 border-b border-border/40 ${className}`}>
@@ -66,16 +74,32 @@ export default function Navbar({
 
                 {/* Right side - Buttons */}
                 <div className="flex items-center gap-3">
-                    <button
-                        onClick={(e) => {
-                            e.preventDefault();
-                            if (onSignInClick) onSignInClick();
-                            else window.location.href = signInHref;
-                        }}
-                        className="text-sm font-medium px-4 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
-                    >
-                        {signInText}
-                    </button>
+                    {isAuthenticated ? (
+                        // Show Dashboard button when authenticated
+                        <button
+                            onClick={(e) => {
+                                e.preventDefault();
+                                if (onDashboardClick) onDashboardClick();
+                                else window.location.href = dashboardHref;
+                            }}
+                            className="text-sm font-medium px-4 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+                        >
+                            {dashboardText}
+                        </button>
+                    ) : (
+                        // Show Sign In button when not authenticated
+                        <button
+                            onClick={(e) => {
+                                e.preventDefault();
+                                if (onSignInClick) onSignInClick();
+                                else window.location.href = signInHref;
+                            }}
+                            className="text-sm font-medium px-4 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+                        >
+                            {signInText}
+                        </button>
+                    )}
+
                     <button
                         onClick={(e) => {
                             e.preventDefault();
