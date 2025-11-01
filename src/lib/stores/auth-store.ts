@@ -19,6 +19,7 @@ interface AuthStore {
     updateCredits: (credits: number) => void;
     decrementCredit: () => void;
     decrementAnonymousCredit: () => boolean;
+    incrementAnonymousCredit: () => void; // 
     incrementAnalysisCount: () => void;
     logout: () => void;
     hasCreditsAvailable: () => boolean;
@@ -63,6 +64,12 @@ export const useAuthStore = create<AuthStore>()(
                 }
                 return false;
             },
+
+            // ✅ NEW: Restore credit on failure (max = FREE_CREDITS)
+            incrementAnonymousCredit: () =>
+                set((state) => ({
+                    anonymousCredits: Math.min(FREE_CREDITS, state.anonymousCredits + 1),
+                })),
 
             incrementAnalysisCount: () =>
                 set((state) => ({
