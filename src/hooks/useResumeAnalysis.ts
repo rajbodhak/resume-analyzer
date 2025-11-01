@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { AnalysisResult } from '../types/analysis';
 import { useAuthStore } from '@/lib/stores/auth-store';
 
@@ -15,7 +15,10 @@ export function useResumeAnalysis() {
     } = useAuthStore();
 
     const isAuthenticated = !!user;
-    const remainingCredits = getRemainingCredits();
+
+    // FIX: Only get credits on client-side after mount
+    const [remainingCredits, setRemainingCredits] = useState(-1);
+    const [isMounted, setIsMounted] = useState(false);
 
     const [file, setFile] = useState<File | null>(null);
     const [jobDescription, setJobDescription] = useState('');
@@ -25,6 +28,19 @@ export function useResumeAnalysis() {
     const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [needsLogin, setNeedsLogin] = useState(false);
+
+    // Update credits only on client-side
+    useEffect(() => {
+        setIsMounted(true);
+        setRemainingCredits(getRemainingCredits());
+    }, [getRemainingCredits]);
+
+    // Update credits when they change
+    useEffect(() => {
+        if (isMounted) {
+            setRemainingCredits(getRemainingCredits());
+        }
+    }, [user, isMounted, getRemainingCredits]);
 
     const validateFile = useCallback((selectedFile: File): boolean => {
         const validTypes = [
@@ -105,7 +121,7 @@ export function useResumeAnalysis() {
     const analyzeResume = useCallback(async () => {
         if (!file) return;
 
-        // ✅ CHECK CREDITS BEFORE ANALYSIS using Zustand store
+        // CHECK CREDITS BEFORE ANALYSIS using Zustand store
         if (!hasCreditsAvailable()) {
             setNeedsLogin(true);
             setError('You have used all 3 free analyses. Please sign in to continue.');
@@ -129,7 +145,7 @@ export function useResumeAnalysis() {
                 }
             }
 
-            // ✅ DECREMENT CREDIT BEFORE API CALL (for anonymous users only)
+            //  DECREMENT CREDIT BEFORE API CALL (for anonymous users only)
             if (!isAuthenticated) {
                 creditDecremented = decrementAnonymousCredit();
                 if (!creditDecremented) {
@@ -137,9 +153,11 @@ export function useResumeAnalysis() {
                     setError('No credits remaining. Please sign in to continue.');
                     return;
                 }
+                // Update local state immediately
+                setRemainingCredits(getRemainingCredits());
             }
 
-            // ✅ SEND isAnonymous FLAG TO BACKEND
+            // SEND isAnonymous FLAG TO BACKEND
             const response = await fetch('/api/analyze', {
                 method: 'POST',
                 headers: {
@@ -165,13 +183,15 @@ export function useResumeAnalysis() {
 
             setAnalysisResult(data.analysis);
 
-            // ✅ Increment analysis count for logged-in users
+            // Increment analysis count for logged-in users
             if (isAuthenticated) {
                 incrementAnalysisCount();
             }
 
-            // Show login prompt if anonymous user has no credits left
+            // Update credits and show login prompt if needed
             const newCredits = getRemainingCredits();
+            setRemainingCredits(newCredits);
+
             if (!isAuthenticated && newCredits <= 0) {
                 setNeedsLogin(true);
             }
@@ -183,6 +203,7 @@ export function useResumeAnalysis() {
 
             if (!isAuthenticated && creditDecremented) {
                 incrementAnonymousCredit();
+                setRemainingCredits(getRemainingCredits());
                 console.log('Credit restored due to analysis failure');
             }
         } finally {
@@ -215,5 +236,6 @@ export function useResumeAnalysis() {
         remainingCredits,
         needsLogin,
         isAuthenticated,
+        isMounted,
     };
 }
