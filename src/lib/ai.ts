@@ -17,107 +17,194 @@ import {
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
-
-//Analyze resume with AI
-export async function analyzeResume(resumeText: string, jobDescription?: string) {
-    try {
-        // Validate inputs
-        if (!resumeText || resumeText.trim().length < 50) {
-            throw new Error("Resume text is too short or empty");
-        }
-
-        const model = genAI.getGenerativeModel({
-            model: "gemini-2.0-flash-exp",
-            generationConfig: {
-                temperature: PROMPT_CONFIG.resumeAnalysis.temperature,
-                maxOutputTokens: PROMPT_CONFIG.resumeAnalysis.maxTokens,
-                responseMimeType: "application/json",
-            },
-        });
-
-        let userPrompt: string;
-        const isJobMatch = jobDescription && jobDescription.trim().length > 20;
-
-        if (isJobMatch) {
-            // Job match analysis
-            userPrompt = fillPromptTemplate(JOB_MATCH_ANALYSIS_PROMPT, {
-                resumeText,
-                jobDescription,
-            });
-        } else {
-            // General resume analysis
-            userPrompt = fillPromptTemplate(RESUME_ANALYSIS_PROMPT, {
-                resumeText,
-            });
-        }
-
-        // Create chat with system instruction
-        const chat = model.startChat({
-            history: [
-                {
-                    role: "user",
-                    parts: [{ text: RESUME_ANALYSIS_SYSTEM_PROMPT }],
-                },
-                {
-                    role: "model",
-                    parts: [{ text: "Understood. I will provide detailed, professional resume analysis with actionable feedback." }],
-                },
-            ],
-        });
-
-        // Send analysis request
-        const result = await chat.sendMessage(userPrompt);
-        const response = result.response;
-        const text = response.text();
-
-        // Parse JSON response
-        let analysisData;
-        try {
-            analysisData = JSON.parse(text);
-        } catch (parseError) {
-            console.error("Failed to parse AI response:", text);
-            throw new Error("AI returned invalid JSON format");
-        }
-
-        // Validate required fields based on analysis type
-        if (isJobMatch) {
-            // Job match requires: matchScore, verdict, summary
-            if (!analysisData.matchScore || !analysisData.verdict || !analysisData.summary) {
-                console.error("Missing job match fields. Received:", analysisData);
-                throw new Error("AI response missing required job match fields");
-            }
-        } else {
-            // Resume analysis requires: overallScore, summary
-            if (!analysisData.overallScore || !analysisData.summary) {
-                console.error("Missing resume analysis fields. Received:", analysisData);
-                throw new Error("AI response missing required resume analysis fields");
-            }
-        }
-
-        return {
-            success: true,
-            data: analysisData,
-            analysisType: isJobMatch ? 'job-match' : 'resume-analysis',
-        };
-
-    } catch (error) {
-        console.error("Error in analyzeResume:", error);
-
-        if (error instanceof Error) {
-            return {
-                success: false,
-                error: error.message,
-            };
-        }
-
-        return {
-            success: false,
-            error: "An unexpected error occurred during analysis",
-        };
+/**
+ * Enhanced validation for AI-generated analysis
+ * Ensures the response is complete and usable before saving to DB
+ */
+function validateAnalysisResponse(analysisData: any, isJobMatch: boolean): {
+    isValid: boolean;
+    error?: string;
+} {
+    if (!analysisData || typeof analysisData !== 'object') {
+        return { isValid: false, error: 'Invalid response format' };
     }
+
+    if (isJobMatch) {
+        // Job match validation
+        if (typeof analysisData.matchScore !== 'number' ||
+            analysisData.matchScore < 0 ||
+            analysisData.matchScore > 100) {
+            return { isValid: false, error: 'Invalid or missing matchScore' };
+        }
+
+        if (!analysisData.verdict ||
+            !['strong_match', 'good_match', 'moderate_match', 'weak_match'].includes(analysisData.verdict)) {
+            return { isValid: false, error: 'Invalid or missing verdict' };
+        }
+
+        if (!analysisData.summary || typeof analysisData.summary !== 'string' ||
+            analysisData.summary.length < 30) {
+            return { isValid: false, error: 'Summary is missing or too short' };
+        }
+
+        // Check for essential job match sections
+        if (!analysisData.keywordMatch || !analysisData.skillsMatch) {
+            return { isValid: false, error: 'Missing keyword or skills match analysis' };
+        }
+
+        // Validate keywordMatch structure
+        if (!analysisData.keywordMatch.matched || !Array.isArray(analysisData.keywordMatch.matched)) {
+            return { isValid: false, error: 'Invalid keywordMatch structure' };
+        }
+
+    } else {
+        // Resume analysis validation
+        if (typeof analysisData.overallScore !== 'number' ||
+            analysisData.overallScore < 0 ||
+            analysisData.overallScore > 100) {
+            return { isValid: false, error: 'Invalid or missing overallScore' };
+        }
+
+        if (!analysisData.summary || typeof analysisData.summary !== 'string' ||
+            analysisData.summary.length < 30) {
+            return { isValid: false, error: 'Summary is missing or too short' };
+        }
+
+        // Check for at least one detailed section
+        const hasDetailedAnalysis = analysisData.detailedAnalysis &&
+            typeof analysisData.detailedAnalysis === 'object';
+        const hasStrengthsWeaknesses =
+            (Array.isArray(analysisData.strengths) && analysisData.strengths.length > 0) ||
+            (Array.isArray(analysisData.weaknesses) && analysisData.weaknesses.length > 0);
+
+        if (!hasDetailedAnalysis && !hasStrengthsWeaknesses) {
+            return { isValid: false, error: 'Missing detailed analysis or strengths/weaknesses' };
+        }
+    }
+
+    return { isValid: true };
 }
 
-// Generate cover letter based on resume and job description
+/**
+ * Analyze resume with AI (with enhanced validation)
+ */
+export async function analyzeResume(resumeText: string, jobDescription?: string) {
+    const maxRetries = 2;
+    let lastError: Error | null = null;
+
+    // Try up to maxRetries times for flaky free API
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            // Validate inputs
+            if (!resumeText || resumeText.trim().length < 50) {
+                throw new Error("Resume text is too short or empty");
+            }
+
+            const model = genAI.getGenerativeModel({
+                model: "gemini-2.0-flash-exp",
+                generationConfig: {
+                    temperature: PROMPT_CONFIG.resumeAnalysis.temperature,
+                    maxOutputTokens: PROMPT_CONFIG.resumeAnalysis.maxTokens,
+                    responseMimeType: "application/json",
+                },
+            });
+
+            let userPrompt: string;
+            const isJobMatch = !!(jobDescription && jobDescription.trim().length > 20);
+
+            if (isJobMatch) {
+                userPrompt = fillPromptTemplate(JOB_MATCH_ANALYSIS_PROMPT, {
+                    resumeText,
+                    jobDescription,
+                });
+            } else {
+                userPrompt = fillPromptTemplate(RESUME_ANALYSIS_PROMPT, {
+                    resumeText,
+                });
+            }
+
+            // Create chat with system instruction
+            const chat = model.startChat({
+                history: [
+                    {
+                        role: "user",
+                        parts: [{ text: RESUME_ANALYSIS_SYSTEM_PROMPT }],
+                    },
+                    {
+                        role: "model",
+                        parts: [{ text: "Understood. I will provide detailed, professional resume analysis with actionable feedback." }],
+                    },
+                ],
+            });
+
+            // Send analysis request with timeout
+            console.log(`🤖 Sending analysis request (attempt ${attempt}/${maxRetries})...`);
+            const result = await Promise.race([
+                chat.sendMessage(userPrompt),
+                new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('AI request timeout')), 30000)
+                )
+            ]) as any;
+
+            const response = result.response;
+            const text = response.text();
+
+            // Parse JSON response
+            let analysisData;
+            try {
+                analysisData = JSON.parse(text);
+            } catch (parseError) {
+                console.error(`❌ Failed to parse AI response (attempt ${attempt}):`, text.substring(0, 200));
+                throw new Error("AI returned invalid JSON format");
+            }
+
+            // Enhanced validation
+            const validation = validateAnalysisResponse(analysisData, isJobMatch);
+            if (!validation.isValid) {
+                console.warn(`⚠️ Validation failed (attempt ${attempt}): ${validation.error}`);
+                console.warn('Received data:', JSON.stringify(analysisData, null, 2).substring(0, 300));
+
+                if (attempt < maxRetries) {
+                    console.log(`🔄 Retrying... (${attempt + 1}/${maxRetries})`);
+                    await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+                    continue;
+                }
+
+                throw new Error(`Analysis incomplete: ${validation.error}`);
+            }
+
+            // Success!
+            console.log(`✅ Analysis completed successfully on attempt ${attempt}`);
+            return {
+                success: true,
+                data: analysisData,
+                analysisType: isJobMatch ? 'job-match' : 'resume-analysis',
+            };
+
+        } catch (error) {
+            lastError = error instanceof Error ? error : new Error('Unknown error');
+            console.error(`❌ Error in analyzeResume (attempt ${attempt}/${maxRetries}):`, lastError.message);
+
+            // If this is the last attempt, break
+            if (attempt >= maxRetries) {
+                break;
+            }
+
+            // Wait before retry
+            await new Promise(resolve => setTimeout(resolve, 1500));
+        }
+    }
+
+    // All retries failed
+    return {
+        success: false,
+        error: lastError?.message || "Failed to generate analysis after multiple attempts",
+    };
+}
+
+/**
+ * Generate cover letter based on resume and job description
+ */
 export async function generateCoverLetter(
     resumeText: string,
     jobDescription: string,
@@ -152,6 +239,11 @@ export async function generateCoverLetter(
         const result = await model.generateContent(prompt);
         const coverLetter = result.response.text();
 
+        // Validate cover letter is not too short
+        if (coverLetter.length < 100) {
+            throw new Error("Generated cover letter is too short");
+        }
+
         return {
             success: true,
             data: { coverLetter },
@@ -166,7 +258,9 @@ export async function generateCoverLetter(
     }
 }
 
-//Get improvement suggestions for specific resume section
+/**
+ * Get improvement suggestions for specific resume section
+ */
 export async function getImprovementSuggestions(
     sectionType: string,
     originalContent: string,
@@ -210,7 +304,9 @@ export async function getImprovementSuggestions(
     }
 }
 
-//Test function to verify API key and connection
+/**
+ * Test function to verify API key and connection
+ */
 export async function testGeminiConnection() {
     try {
         const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
