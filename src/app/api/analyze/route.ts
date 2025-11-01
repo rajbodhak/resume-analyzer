@@ -1,51 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { analyzeResume } from '@/lib/ai';
-import { rateLimit } from '@/lib/rate-limit';
-
-// Rate limiter
-const limiter = rateLimit({
-    interval: 60 * 1000,
-    uniqueTokenPerInterval: 500,
-});
+import { analysisRateLimit } from '@/lib/rate-limit';
+import { validateAnalysisResult, saveAnalysisToDatabase } from '@/lib/db-helper';
 
 // Helper function to get client IP
 function getClientIp(request: NextRequest): string {
-    // Check various headers for IP address
     const forwarded = request.headers.get('x-forwarded-for');
     const realIp = request.headers.get('x-real-ip');
     const cfConnectingIp = request.headers.get('cf-connecting-ip');
 
-    if (forwarded) {
-        return forwarded.split(',')[0].trim();
-    }
-
-    if (realIp) {
-        return realIp;
-    }
-
-    if (cfConnectingIp) {
-        return cfConnectingIp;
-    }
-
+    if (forwarded) return forwarded.split(',')[0].trim();
+    if (realIp) return realIp;
+    if (cfConnectingIp) return cfConnectingIp;
     return 'anonymous';
 }
 
 export async function POST(request: NextRequest) {
     try {
-        // Rate limiting
-        const identifier = getClientIp(request);
-        try {
-            await limiter.check(10, identifier);
-        } catch {
-            return NextResponse.json(
-                { error: 'Rate limit exceeded. Please try again later.' },
-                { status: 429 }
-            );
-        }
+        // Get session to check if user is logged in
+        const session = await getServerSession(authOptions);
+        const isAuthenticated = !!session?.user;
 
         // Parse request body
         const body = await request.json();
-        const { resumeText, jobDescription } = body;
+        const { resumeText, jobDescription, isAnonymous } = body;
 
         // Validation
         if (!resumeText || typeof resumeText !== 'string') {
@@ -69,12 +49,35 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Optional job description validation
         if (jobDescription && typeof jobDescription !== 'string') {
             return NextResponse.json(
                 { error: 'Job description must be a string' },
                 { status: 400 }
             );
+        }
+
+        // Rate limiting ONLY for authenticated users
+        if (isAuthenticated && session.user?.id) {
+            const userId = session.user.id;
+
+            // Apply rate limit: 10 analyses per hour
+            const rateLimitResult = analysisRateLimit.checkWithInfo(10, userId);
+
+            if (!rateLimitResult.success) {
+                return NextResponse.json(
+                    {
+                        error: `Rate limit exceeded. You can perform ${rateLimitResult.limit} analyses per hour. Please try again later.`,
+                        remaining: rateLimitResult.remaining,
+                        reset: rateLimitResult.reset,
+                    },
+                    { status: 429 }
+                );
+            }
+
+            console.log(`Rate limit check passed. Remaining: ${rateLimitResult.remaining}`);
+        } else {
+            // Anonymous users - no rate limiting on backend
+            console.log('Anonymous user analysis - no rate limiting applied');
         }
 
         // Call AI analysis
@@ -90,9 +93,59 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Validate analysis result before saving
+        const analysisData = result.data;
+        const validation = validateAnalysisResult(analysisData);
+
+        if (!validation.isValid) {
+            console.warn('⚠️ Invalid analysis result:', validation.reason);
+
+            // Return the result but warn that it wasn't saved
+            return NextResponse.json({
+                success: false,
+                error: `Analysis incomplete: ${validation.reason}. Please try again.`,
+                analysis: analysisData,
+                saved: false,
+            }, { status: 422 });
+        }
+
+        // Save to database ONLY for authenticated users with valid results
+        if (isAuthenticated && session.user?.id) {
+            const saveResult = await saveAnalysisToDatabase({
+                userId: session.user.id,
+                resumeText,
+                jobDescription,
+                analysisResult: analysisData,
+                originalFileName: undefined,
+            });
+
+            if (!saveResult.success) {
+                console.error('❌ Failed to save analysis:', saveResult.error);
+                // Still return the analysis even if save fails
+                return NextResponse.json({
+                    success: true,
+                    analysis: analysisData,
+                    saved: false,
+                    warning: 'Analysis completed but could not be saved to history',
+                });
+            }
+
+            console.log(`✅ Analysis saved with ID: ${saveResult.analysisId}`);
+
+            return NextResponse.json({
+                success: true,
+                analysis: analysisData,
+                analysisId: saveResult.analysisId,
+                saved: true,
+            });
+        }
+
+        // For anonymous users - return analysis without saving
         return NextResponse.json({
             success: true,
-            analysis: result.data,
+            analysis: analysisData,
+            saved: false,
+            message: 'Analysis completed. Sign in to save your analysis history.',
         });
 
     } catch (error) {

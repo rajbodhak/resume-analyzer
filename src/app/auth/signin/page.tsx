@@ -1,38 +1,81 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { motion } from 'framer-motion';
 import { Chrome, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 
 function LoginContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const { data: session, status } = useSession();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
 
     const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
+
+    // Redirect if already authenticated
+    useEffect(() => {
+        if (status === 'authenticated' && session) {
+            console.log('User authenticated, redirecting to:', callbackUrl);
+            router.push(callbackUrl);
+            router.refresh();
+        }
+    }, [status, session, callbackUrl, router]);
 
     const handleGoogleSignIn = async () => {
         setIsLoading(true);
         setError('');
 
         try {
-            await signIn('google', {
+            const result = await signIn('google', {
                 callbackUrl,
-                redirect: true
+                redirect: false, // Change to false to handle manually
             });
+
+            if (result?.error) {
+                console.error('Sign in error:', result.error);
+                setError('Failed to sign in. Please try again.');
+                setIsLoading(false);
+            } else if (result?.ok) {
+                // Wait a moment for session to update, then redirect
+                setTimeout(() => {
+                    router.push(callbackUrl);
+                    router.refresh();
+                }, 500);
+            }
         } catch (error) {
             console.error('Sign in error:', error);
             setError('Failed to sign in. Please try again.');
             setIsLoading(false);
         }
     };
+
+    // Show loading if checking authentication
+    if (status === 'loading') {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a]">
+                <div className="size-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            </div>
+        );
+    }
+
+    // Don't show login form if already authenticated
+    if (status === 'authenticated') {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a]">
+                <div className="text-center">
+                    <div className="size-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4" />
+                    <p className="text-white">Redirecting...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div

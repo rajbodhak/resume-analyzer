@@ -64,6 +64,20 @@ export const authOptions: NextAuthOptions = {
             }
             return session;
         },
+
+        async redirect({ url, baseUrl }) {
+            // Allows relative callback URLs
+            if (url.startsWith("/")) return `${baseUrl}${url}`;
+            // Allows callback URLs on the same origin
+            else if (new URL(url).origin === baseUrl) return url;
+            // Default redirect to dashboard after sign in
+            return `${baseUrl}/dashboard`;
+        },
+
+        //  OPTIONAL: Add signIn callback to ensure user can sign in
+        async signIn({ user, account, profile }) {
+            return true; // Allow sign in
+        },
     },
 
     events: {
@@ -79,17 +93,27 @@ export const authOptions: NextAuthOptions = {
                         analysesCount: 0,
                     }
                 });
+                console.log("✅ New user initialized with defaults:", user.id);
             } catch (error) {
                 console.error("Error initializing user defaults:", error);
             }
-        }
+        },
+
+        // Log when user signs in
+        async signIn({ user }) {
+            console.log("✅ User signed in:", user.email);
+        },
     },
 
     pages: {
         signIn: '/auth/signin',
+        error: '/auth/signin',
     },
 
     secret: process.env.NEXTAUTH_SECRET,
+
+    //  debug in development
+    debug: process.env.NODE_ENV === 'development',
 };
 
 const handler = NextAuth(authOptions);
