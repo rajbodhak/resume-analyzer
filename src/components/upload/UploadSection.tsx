@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Upload, FileText, X, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Upload, FileText, X, Loader2, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react';
 
 interface UploadSectionProps {
     file: File | null;
@@ -18,6 +18,8 @@ interface UploadSectionProps {
     onFileSelect: (file: File) => void;
     onRemoveFile: () => void;
     onAnalyze: () => void;
+    remainingCredits: number;
+    isAuthenticated: boolean;
 }
 
 export function UploadSection({
@@ -31,6 +33,8 @@ export function UploadSection({
     onFileSelect,
     onRemoveFile,
     onAnalyze,
+    remainingCredits,
+    isAuthenticated,
 }: UploadSectionProps) {
     const [isDragging, setIsDragging] = useState(false);
 
@@ -69,13 +73,28 @@ export function UploadSection({
         }
     };
 
+    // Check if user can analyze
+    const canAnalyze = isAuthenticated || remainingCredits > 0;
+    const buttonDisabled = isParsing || isAnalyzing || !canAnalyze;
+
     return (
         <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
             <CardHeader>
-                <CardTitle>Upload Resume</CardTitle>
-                <CardDescription>
-                    Supported formats: PDF, DOC, DOCX (Max 10MB)
-                </CardDescription>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <CardTitle>Upload Resume</CardTitle>
+                        <CardDescription>
+                            Supported formats: PDF, DOC, DOCX (Max 10MB)
+                        </CardDescription>
+                    </div>
+                    {/*  Show unlimited badge for authenticated users */}
+                    {isAuthenticated && (
+                        <div className="flex items-center gap-1.5 rounded-full bg-green-500/10 px-3 py-1 text-xs font-medium text-green-500 border border-green-500/20">
+                            <Sparkles className="h-3 w-3" />
+                            Unlimited
+                        </div>
+                    )}
+                </div>
             </CardHeader>
             <CardContent className="space-y-6">
                 {!file ? (
@@ -85,8 +104,8 @@ export function UploadSection({
                         onDragLeave={handleDragLeave}
                         onDrop={handleDrop}
                         className={`relative cursor-pointer rounded-lg border-2 border-dashed p-12 text-center transition-colors ${isDragging
-                                ? 'border-primary bg-primary/5'
-                                : 'border-border hover:border-primary/50 hover:bg-card/80'
+                            ? 'border-primary bg-primary/5'
+                            : 'border-border hover:border-primary/50 hover:bg-card/80'
                             }`}
                     >
                         <input
@@ -153,30 +172,55 @@ export function UploadSection({
                     </div>
                 )}
 
+                {/*  Show warning when credits are exhausted */}
+                {!isAuthenticated && remainingCredits <= 0 && (
+                    <div className="flex items-center gap-2 rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-3 text-sm text-yellow-500">
+                        <AlertCircle className="size-4 shrink-0" />
+                        <span>No free analyses remaining. Please sign in to continue.</span>
+                    </div>
+                )}
+
                 {file && !hasResult && (
-                    <Button
-                        onClick={onAnalyze}
-                        disabled={isParsing || isAnalyzing}
-                        className="w-full"
-                        size="lg"
-                    >
-                        {isParsing ? (
-                            <>
-                                <Loader2 className="mr-2 size-5 animate-spin" />
-                                Parsing Resume...
-                            </>
-                        ) : isAnalyzing ? (
-                            <>
-                                <Loader2 className="mr-2 size-5 animate-spin" />
-                                Analyzing...
-                            </>
-                        ) : (
-                            <>
-                                <CheckCircle2 className="mr-2 size-5" />
-                                Analyze Resume
-                            </>
+                    <div className="space-y-3">
+                        <Button
+                            onClick={onAnalyze}
+                            disabled={buttonDisabled}
+                            className="w-full"
+                            size="lg"
+                        >
+                            {isParsing ? (
+                                <>
+                                    <Loader2 className="mr-2 size-5 animate-spin" />
+                                    Parsing Resume...
+                                </>
+                            ) : isAnalyzing ? (
+                                <>
+                                    <Loader2 className="mr-2 size-5 animate-spin" />
+                                    Analyzing...
+                                </>
+                            ) : !canAnalyze ? (
+                                <>
+                                    <AlertCircle className="mr-2 size-5" />
+                                    Sign In Required
+                                </>
+                            ) : (
+                                <>
+                                    <CheckCircle2 className="mr-2 size-5" />
+                                    Analyze Resume
+                                </>
+                            )}
+                        </Button>
+
+                        {/* Show credit info below button for anonymous users */}
+                        {!isAuthenticated && remainingCredits > 0 && (
+                            <p className="text-center text-xs text-muted-foreground">
+                                {remainingCredits === 1
+                                    ? 'This is your last free analysis'
+                                    : `${remainingCredits - 1} free ${remainingCredits - 1 === 1 ? 'analysis' : 'analyses'} remaining after this`
+                                }
+                            </p>
                         )}
-                    </Button>
+                    </div>
                 )}
             </CardContent>
         </Card>

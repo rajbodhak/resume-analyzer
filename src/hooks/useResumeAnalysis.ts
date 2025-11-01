@@ -212,7 +212,6 @@ export function useResumeAnalysis() {
         handleFileSelect,
         removeFile,
         analyzeResume,
-        // Credit system exports from Zustand store
         remainingCredits,
         needsLogin,
         isAuthenticated,
