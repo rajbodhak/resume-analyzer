@@ -32,12 +32,17 @@ export default function DashboardPage() {
         return null;
     }
 
+    const handleSignOut = async () => {
+        useAuthStore.getState().logout();
+        await signOut({ callbackUrl: '/' });
+    };
+
     return (
         <div className="min-h-screen bg-[#0a0a0a] p-8 mt-12">
             <div className="mx-auto max-w-4xl space-y-6">
                 <div className="flex items-center justify-between">
                     <h1 className="text-3xl font-bold text-white">Dashboard</h1>
-                    <Button onClick={() => signOut({ callbackUrl: '/' })} variant="outline">
+                    <Button onClick={handleSignOut} variant="outline">
                         Sign Out
                     </Button>
                 </div>
