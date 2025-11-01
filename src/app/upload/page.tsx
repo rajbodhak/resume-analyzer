@@ -23,6 +23,7 @@ export default function UploadPage() {
         remainingCredits,
         needsLogin,
         isAuthenticated,
+        isMounted,
     } = useResumeAnalysis();
 
     return (
@@ -42,7 +43,8 @@ export default function UploadPage() {
                     </p>
 
                     {/*Credit Counter for Anonymous Users */}
-                    {!isAuthenticated && remainingCredits !== -1 && (
+                    {/* Credit Counter for Anonymous Users */}
+                    {isMounted && !isAuthenticated && remainingCredits !== -1 && (
                         <motion.div
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
