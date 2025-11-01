@@ -2,8 +2,21 @@
 
 import { useState, useCallback } from 'react';
 import { AnalysisResult } from '../types/analysis';
+import { useAuthStore } from '@/lib/stores/auth-store';
 
 export function useResumeAnalysis() {
+    const {
+        user,
+        hasCreditsAvailable,
+        getRemainingCredits,
+        decrementAnonymousCredit,
+        incrementAnonymousCredit,
+        incrementAnalysisCount
+    } = useAuthStore();
+
+    const isAuthenticated = !!user;
+    const remainingCredits = getRemainingCredits();
+
     const [file, setFile] = useState<File | null>(null);
     const [jobDescription, setJobDescription] = useState('');
     const [resumeText, setResumeText] = useState('');
@@ -11,6 +24,7 @@ export function useResumeAnalysis() {
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [needsLogin, setNeedsLogin] = useState(false);
 
     const validateFile = useCallback((selectedFile: File): boolean => {
         const validTypes = [
@@ -43,6 +57,7 @@ export function useResumeAnalysis() {
         setError(null);
         setAnalysisResult(null);
         setResumeText('');
+        setNeedsLogin(false);
     }, [validateFile]);
 
     const removeFile = useCallback(() => {
@@ -51,6 +66,7 @@ export function useResumeAnalysis() {
         setAnalysisResult(null);
         setResumeText('');
         setJobDescription('');
+        setNeedsLogin(false);
     }, []);
 
     const parseResume = useCallback(async (): Promise<string | null> => {
@@ -89,8 +105,19 @@ export function useResumeAnalysis() {
     const analyzeResume = useCallback(async () => {
         if (!file) return;
 
+        // ✅ CHECK CREDITS BEFORE ANALYSIS using Zustand store
+        if (!hasCreditsAvailable()) {
+            setNeedsLogin(true);
+            setError('You have used all 3 free analyses. Please sign in to continue.');
+            return;
+        }
+
         setIsAnalyzing(true);
         setError(null);
+        setNeedsLogin(false);
+
+        // Track if we decremented credit (for rollback on failure)
+        let creditDecremented = false;
 
         try {
             // Parse resume if not already parsed
@@ -102,7 +129,17 @@ export function useResumeAnalysis() {
                 }
             }
 
-            // Analyze resume
+            // ✅ DECREMENT CREDIT BEFORE API CALL (for anonymous users only)
+            if (!isAuthenticated) {
+                creditDecremented = decrementAnonymousCredit();
+                if (!creditDecremented) {
+                    setNeedsLogin(true);
+                    setError('No credits remaining. Please sign in to continue.');
+                    return;
+                }
+            }
+
+            // ✅ SEND isAnonymous FLAG TO BACKEND
             const response = await fetch('/api/analyze', {
                 method: 'POST',
                 headers: {
@@ -111,6 +148,7 @@ export function useResumeAnalysis() {
                 body: JSON.stringify({
                     resumeText: text,
                     jobDescription: jobDescription.trim() || undefined,
+                    isAnonymous: !isAuthenticated,
                 }),
             });
 
@@ -127,14 +165,41 @@ export function useResumeAnalysis() {
 
             setAnalysisResult(data.analysis);
 
+            // ✅ Increment analysis count for logged-in users
+            if (isAuthenticated) {
+                incrementAnalysisCount();
+            }
+
+            // Show login prompt if anonymous user has no credits left
+            const newCredits = getRemainingCredits();
+            if (!isAuthenticated && newCredits <= 0) {
+                setNeedsLogin(true);
+            }
+
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to analyze resume';
             setError(errorMessage);
             console.error('Analysis error:', err);
+
+            if (!isAuthenticated && creditDecremented) {
+                incrementAnonymousCredit();
+                console.log('Credit restored due to analysis failure');
+            }
         } finally {
             setIsAnalyzing(false);
         }
-    }, [file, jobDescription, resumeText, parseResume]);
+    }, [
+        file,
+        jobDescription,
+        resumeText,
+        parseResume,
+        isAuthenticated,
+        hasCreditsAvailable,
+        getRemainingCredits,
+        decrementAnonymousCredit,
+        incrementAnonymousCredit,
+        incrementAnalysisCount
+    ]);
 
     return {
         file,
@@ -147,5 +212,9 @@ export function useResumeAnalysis() {
         handleFileSelect,
         removeFile,
         analyzeResume,
+        // Credit system exports from Zustand store
+        remainingCredits,
+        needsLogin,
+        isAuthenticated,
     };
 }
