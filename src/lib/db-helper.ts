@@ -177,6 +177,7 @@ export async function getUserAnalysisHistory(userId: string, limit: number = 10)
         return {
             success: false,
             error: 'Failed to fetch analysis history',
+            analyses: [],
         };
     }
 }

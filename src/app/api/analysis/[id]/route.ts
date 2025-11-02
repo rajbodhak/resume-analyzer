@@ -7,7 +7,7 @@ import { prisma } from '@/lib/prisma';
 // GET - Fetch single analysis
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const session = await getServerSession(authOptions);
@@ -19,7 +19,10 @@ export async function GET(
             );
         }
 
-        const result = await getAnalysisById(params.id, session.user.id);
+        // Await params before using
+        const { id } = await params;
+
+        const result = await getAnalysisById(id, session.user.id);
 
         if (!result.success) {
             return NextResponse.json(
@@ -44,7 +47,7 @@ export async function GET(
 // DELETE - Delete analysis
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const session = await getServerSession(authOptions);
@@ -56,10 +59,13 @@ export async function DELETE(
             );
         }
 
+        // Await params before using
+        const { id } = await params;
+
         // Verify ownership and delete
         const analysis = await prisma.analysis.findFirst({
             where: {
-                id: params.id,
+                id: id,
                 userId: session.user.id,
             },
         });
@@ -72,7 +78,7 @@ export async function DELETE(
         }
 
         await prisma.analysis.delete({
-            where: { id: params.id },
+            where: { id: id },
         });
 
         // Update user's analysis count

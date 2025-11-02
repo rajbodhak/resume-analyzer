@@ -45,7 +45,7 @@ export default function HistoryPage() {
 
     const fetchAnalyses = async () => {
         try {
-            const response = await fetch('/api/analysis/history?limit=100');
+            const response = await fetch('/api/history?limit=100');
             const result = await response.json();
 
             if (result.success) {
@@ -125,7 +125,7 @@ export default function HistoryPage() {
     }
 
     return (
-        <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <div className="container mx-auto px-4 py-8 max-w-7xl md:mt-10">
             <div className="space-y-6">
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
