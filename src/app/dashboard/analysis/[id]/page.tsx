@@ -52,7 +52,7 @@ export default function AnalysisDetailsPage() {
                 summary: `Analysis completed on ${new Date(analysis.createdAt).toLocaleDateString()}`,
                 keywordMatch: analysis.missingKeywords,
                 skillsMatch: analysis.skillsMatch,
-                experienceMatch: undefined, // Changed from null to undefined
+                experienceMatch: undefined,
                 recommendedChanges: analysis.improvements,
                 atsOptimization: {
                     currentATSFriendliness: analysis.overallScore,
@@ -66,9 +66,9 @@ export default function AnalysisDetailsPage() {
                 summary: `Analysis completed on ${new Date(analysis.createdAt).toLocaleDateString()}`,
                 strengths: [],
                 weaknesses: [],
-                detailedAnalysis: undefined, // Changed from null to undefined
+                detailedAnalysis: undefined,
                 actionableSteps: analysis.improvements,
-                industryBenchmark: undefined, // Changed from null to undefined
+                industryBenchmark: undefined,
             };
         }
     };
@@ -82,7 +82,7 @@ export default function AnalysisDetailsPage() {
 
     if (isLoading) {
         return (
-            <div className="container mx-auto px-4 py-8 max-w-7xl">
+            <div className="container mx-auto px-4 py-8 max-w-7xl md:mt-10">
                 <div className="flex items-center justify-center h-64">
                     <Loader2 className="w-8 h-8 animate-spin text-primary" />
                 </div>
@@ -92,7 +92,7 @@ export default function AnalysisDetailsPage() {
 
     if (error || !analysis) {
         return (
-            <div className="container mx-auto px-4 py-8 max-w-7xl">
+            <div className="container mx-auto px-4 py-8 max-w-7xl md:mt-10">
                 <div className="text-center py-12">
                     <h2 className="text-2xl font-bold mb-2">Analysis Not Found</h2>
                     <p className="text-muted-foreground mb-6">{error || 'This analysis does not exist'}</p>
@@ -108,7 +108,7 @@ export default function AnalysisDetailsPage() {
     const analysisResult = reconstructAnalysisResult();
 
     return (
-        <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <div className="container mx-auto px-4 py-8 max-w-7xl md:mt-10">
             <div className="space-y-6">
                 {/* Header */}
                 <div className="flex items-center gap-4">
