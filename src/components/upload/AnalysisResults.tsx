@@ -26,7 +26,7 @@ export function AnalysisResults({ result, onAnalyzeAnother }: AnalysisResultsPro
                 <Button onClick={onAnalyzeAnother} variant="outline" className="flex-1">
                     Analyze Another Resume
                 </Button>
-                <Button className="flex-1">Get Detailed Recommendations</Button>
+                {/* <Button className="flex-1">Get Detailed Recommendations</Button> */}
             </div>
         </div>
     );
