@@ -1,39 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import { getUserAnalysisHistory } from '@/lib/db-helper';
+import { getAnalysisById } from '@/lib/db-helper';
 
-export async function GET(request: NextRequest) {
+export async function GET(
+    request: NextRequest,
+    { params }: { params: { id: string } }
+) {
     try {
         const session = await getServerSession(authOptions);
 
         if (!session?.user?.id) {
             return NextResponse.json(
-                { error: 'Please sign in to view your analysis history' },
+                { error: 'Unauthorized' },
                 { status: 401 }
             );
         }
 
-        const { searchParams } = new URL(request.url);
-        const limit = parseInt(searchParams.get('limit') || '10');
-
-        const result = await getUserAnalysisHistory(session.user.id, limit);
+        const result = await getAnalysisById(params.id, session.user.id);
 
         if (!result.success) {
             return NextResponse.json(
                 { error: result.error },
-                { status: 500 }
+                { status: result.error === 'Analysis not found' ? 404 : 500 }
             );
         }
 
         return NextResponse.json({
             success: true,
-            analyses: result.analyses,
+            analysis: result.analysis,
         });
     } catch (error) {
-        console.error('Error in history API:', error);
+        console.error('Error in analysis detail API:', error);
         return NextResponse.json(
-            { error: 'Failed to fetch analysis history' },
+            { error: 'Failed to fetch analysis' },
             { status: 500 }
         );
     }
