@@ -127,6 +127,7 @@ export async function POST(request: NextRequest) {
                     analysis: analysisData,
                     saved: false,
                     warning: 'Analysis completed but could not be saved to history',
+                    saveError: saveResult.error,
                 });
             }
 
@@ -146,6 +147,7 @@ export async function POST(request: NextRequest) {
             analysis: analysisData,
             saved: false,
             message: 'Analysis completed. Sign in to save your analysis history.',
+
         });
 
     } catch (error) {
