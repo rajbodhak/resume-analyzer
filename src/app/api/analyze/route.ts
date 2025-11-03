@@ -4,6 +4,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { analyzeResume } from '@/lib/ai';
 import { analysisRateLimit } from '@/lib/rate-limit';
 import { validateAnalysisResult, saveAnalysisToDatabase } from '@/lib/db-helper';
+import { prisma } from '@/lib/prisma';
 
 // Helper function to get client IP
 function getClientIp(request: NextRequest): string {
@@ -56,9 +57,35 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Rate limiting ONLY for authenticated users
+        //CHECK CREDITS FOR AUTHENTICATED USERS
         if (isAuthenticated && session.user?.id) {
             const userId = session.user.id;
+
+            // Fetch current user credits from database
+            const user = await prisma.user.findUnique({
+                where: { id: userId },
+                select: { creditsRemaining: true }
+            });
+
+            if (!user) {
+                return NextResponse.json(
+                    { error: 'User not found' },
+                    { status: 404 }
+                );
+            }
+
+            // Check if user has credits remaining
+            if (user.creditsRemaining <= 0) {
+                return NextResponse.json(
+                    {
+                        error: 'No credits remaining. Please upgrade your plan or contact support.',
+                        creditsRemaining: 0,
+                    },
+                    { status: 403 }
+                );
+            }
+
+            console.log(`User has ${user.creditsRemaining} credits remaining`);
 
             // Apply rate limit: 10 analyses per hour
             const rateLimitResult = analysisRateLimit.checkWithInfo(10, userId);
@@ -111,34 +138,67 @@ export async function POST(request: NextRequest) {
 
         // Save to database ONLY for authenticated users with valid results
         if (isAuthenticated && session.user?.id) {
-            const saveResult = await saveAnalysisToDatabase({
-                userId: session.user.id,
-                resumeText,
-                jobDescription,
-                analysisResult: analysisData,
-                originalFileName: undefined,
-            });
+            const userId = session.user.id;
 
-            if (!saveResult.success) {
-                console.error('❌ Failed to save analysis:', saveResult.error);
-                // Still return the analysis even if save fails
+            // DECREMENT CREDITS AND SAVE ANALYSIS IN A TRANSACTION
+            try {
+                const result = await prisma.$transaction(async (tx) => {
+                    // 1. Decrement user credits
+                    const updatedUser = await tx.user.update({
+                        where: { id: userId },
+                        data: {
+                            creditsRemaining: { decrement: 1 },
+                            analysesCount: { increment: 1 },
+                            lastAnalysisAt: new Date(),
+                        },
+                        select: {
+                            creditsRemaining: true,
+                            analysesCount: true,
+                        }
+                    });
+
+                    // 2. Save analysis
+                    const analysis = await tx.analysis.create({
+                        data: {
+                            userId,
+                            resumeText,
+                            jobDescription: jobDescription || '',
+                            originalFileName: undefined,
+                            overallScore: analysisData.overallScore,
+                            compatibilityScore: analysisData.compatibilityScore,
+                            missingKeywords: analysisData.missingKeywords,
+                            foundKeywords: analysisData.foundKeywords,
+                            skillsMatch: analysisData.skillsMatch,
+                            improvements: analysisData.improvements,
+                            analysisType: jobDescription ? 'job-match' : 'resume-analysis',
+                        }
+                    });
+
+                    return {
+                        analysisId: analysis.id,
+                        creditsRemaining: updatedUser.creditsRemaining,
+                        analysesCount: updatedUser.analysesCount,
+                    };
+                });
+
+                console.log(`Analysis saved. Credits remaining: ${result.creditsRemaining}`);
+
                 return NextResponse.json({
                     success: true,
                     analysis: analysisData,
-                    saved: false,
-                    warning: 'Analysis completed but could not be saved to history',
-                    saveError: saveResult.error,
+                    analysisId: result.analysisId,
+                    saved: true,
+                    creditsRemaining: result.creditsRemaining,
+                    analysesCount: result.analysesCount,
                 });
+
+            } catch (dbError) {
+                console.error('❌ Database transaction failed:', dbError);
+                return NextResponse.json({
+                    success: false,
+                    error: 'Failed to save analysis and update credits. Please try again.',
+                }, { status: 500 });
             }
-
-            console.log(`✅ Analysis saved with ID: ${saveResult.analysisId}`);
-
-            return NextResponse.json({
-                success: true,
-                analysis: analysisData,
-                analysisId: saveResult.analysisId,
-                saved: true,
-            });
         }
 
         // For anonymous users - return analysis without saving
@@ -147,7 +207,6 @@ export async function POST(request: NextRequest) {
             analysis: analysisData,
             saved: false,
             message: 'Analysis completed. Sign in to save your analysis history.',
-
         });
 
     } catch (error) {

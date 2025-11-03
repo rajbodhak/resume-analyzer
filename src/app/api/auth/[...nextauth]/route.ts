@@ -33,13 +33,11 @@ export const authOptions: NextAuthOptions = {
                         }
                     });
 
-                    // Handle case where user exists but hasn't been updated yet
                     token.subscriptionTier = dbUser?.subscriptionTier ?? "free";
                     token.creditsRemaining = dbUser?.creditsRemaining ?? 50;
                     token.analysesCount = dbUser?.analysesCount ?? 0;
                 } catch (error) {
                     console.error("Error fetching user from database:", error);
-                    // Fallback to defaults
                     token.subscriptionTier = "free";
                     token.creditsRemaining = 50;
                     token.analysesCount = 0;
@@ -74,7 +72,6 @@ export const authOptions: NextAuthOptions = {
             return `${baseUrl}/dashboard`;
         },
 
-        //  OPTIONAL: Add signIn callback to ensure user can sign in
         async signIn({ user, account, profile }) {
             return true; // Allow sign in
         },
@@ -84,7 +81,6 @@ export const authOptions: NextAuthOptions = {
         // This runs AFTER user is created
         async createUser({ user }) {
             try {
-                // Set default values for new users
                 await prisma.user.update({
                     where: { id: user.id },
                     data: {
@@ -93,7 +89,7 @@ export const authOptions: NextAuthOptions = {
                         analysesCount: 0,
                     }
                 });
-                console.log("✅ New user initialized with defaults:", user.id);
+                console.log("New user initialized with 50 credits:", user.id);
             } catch (error) {
                 console.error("Error initializing user defaults:", error);
             }
@@ -101,7 +97,7 @@ export const authOptions: NextAuthOptions = {
 
         // Log when user signs in
         async signIn({ user }) {
-            console.log("✅ User signed in:", user.email);
+            console.log("User signed in:", user.email);
         },
     },
 
@@ -112,7 +108,6 @@ export const authOptions: NextAuthOptions = {
 
     secret: process.env.NEXTAUTH_SECRET,
 
-    //  debug in development
     debug: process.env.NODE_ENV === 'development',
 };
 
