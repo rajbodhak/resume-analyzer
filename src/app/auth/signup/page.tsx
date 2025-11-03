@@ -1,34 +1,77 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { motion } from 'framer-motion';
 import { Chrome, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
 const SignupPage = () => {
     const router = useRouter();
+    const { data: session, status } = useSession();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+
+    // Redirect if already authenticated
+    useEffect(() => {
+        if (status === 'authenticated' && session) {
+            console.log('User authenticated, redirecting to dashboard');
+            router.push('/dashboard');
+            router.refresh();
+        }
+    }, [status, session, router]);
 
     const handleGoogleSignUp = async () => {
         setIsLoading(true);
         setError('');
 
         try {
-            await signIn('google', {
+            const result = await signIn('google', {
                 callbackUrl: '/dashboard',
-                redirect: true
+                redirect: false,
             });
+
+            if (result?.error) {
+                console.error('Sign up error:', result.error);
+                setError('Failed to create account. Please try again.');
+                setIsLoading(false);
+            } else if (result?.ok) {
+                // Wait a moment for session to update, then redirect
+                setTimeout(() => {
+                    router.push('/dashboard');
+                    router.refresh();
+                }, 500);
+            }
         } catch (error) {
             console.error('Sign up error:', error);
             setError('Failed to create account. Please try again.');
             setIsLoading(false);
         }
     };
+
+    // Show loading if checking authentication
+    if (status === 'loading') {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a]">
+                <div className="size-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            </div>
+        );
+    }
+
+    // Don't show signup form if already authenticated
+    if (status === 'authenticated') {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a]">
+                <div className="text-center">
+                    <div className="size-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4" />
+                    <p className="text-white">Redirecting...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div

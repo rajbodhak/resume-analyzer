@@ -165,11 +165,11 @@ export async function POST(request: NextRequest) {
                             jobDescription: jobDescription || '',
                             originalFileName: undefined,
                             overallScore: analysisData.overallScore,
-                            compatibilityScore: analysisData.compatibilityScore,
-                            missingKeywords: analysisData.missingKeywords,
-                            foundKeywords: analysisData.foundKeywords,
-                            skillsMatch: analysisData.skillsMatch,
-                            improvements: analysisData.improvements,
+                            compatibilityScore: analysisData.compatibilityScore ?? null,
+                            missingKeywords: analysisData.missingKeywords ?? [], // Default to empty array
+                            foundKeywords: analysisData.foundKeywords ?? [], // Default to empty array
+                            skillsMatch: analysisData.skillsMatch ?? {}, // Default to empty object
+                            improvements: analysisData.improvements ?? [], // Default to empty array
                             analysisType: jobDescription ? 'job-match' : 'resume-analysis',
                         }
                     });

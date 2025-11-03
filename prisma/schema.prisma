@@ -54,11 +54,11 @@ model Analysis {
 
   // Results
   overallScore       Int
-  compatibilityScore Int
-  missingKeywords    Json
-  foundKeywords      Json
-  skillsMatch        Json
-  improvements       Json
+  compatibilityScore Int? // Optional for resume-only analysis
+  missingKeywords    Json?
+  foundKeywords      Json?
+  skillsMatch        Json?
+  improvements       Json?
 
   // Optional
   coverLetter  String? @db.Text

@@ -42,9 +42,8 @@ export default function UploadPage() {
                         Upload your resume and get instant AI-powered feedback
                     </p>
 
-                    {/*Credit Counter for Anonymous Users */}
-                    {/* Credit Counter for Anonymous Users */}
-                    {isMounted && !isAuthenticated && remainingCredits !== -1 && (
+                    {/* Credit Counter - Shows for BOTH anonymous and authenticated users */}
+                    {isMounted && (
                         <motion.div
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
@@ -53,10 +52,21 @@ export default function UploadPage() {
                         >
                             <AlertCircle className="h-4 w-4" />
                             <span>
-                                {remainingCredits > 0
-                                    ? `${remainingCredits} free ${remainingCredits === 1 ? 'analysis' : 'analyses'} remaining`
-                                    : 'No free analyses remaining'
-                                }
+                                {isAuthenticated ? (
+                                    // Authenticated user - show actual credits
+                                    remainingCredits > 0 ? (
+                                        `${remainingCredits} ${remainingCredits === 1 ? 'credit' : 'credits'} remaining`
+                                    ) : (
+                                        'No credits remaining'
+                                    )
+                                ) : (
+                                    // Anonymous user - show free analyses
+                                    remainingCredits > 0 ? (
+                                        `${remainingCredits} free ${remainingCredits === 1 ? 'analysis' : 'analyses'} remaining`
+                                    ) : (
+                                        'No free analyses remaining'
+                                    )
+                                )}
                             </span>
                         </motion.div>
                     )}
@@ -76,15 +86,54 @@ export default function UploadPage() {
                                     Free Analyses Used
                                 </h3>
                                 <p className="text-sm text-neutral-300 mb-3">
-                                    You've used all 3 free analyses. Sign in to get unlimited analyses and save your results!
+                                    You've used all 3 free analyses. Sign in to get 50 credits and save your results!
                                 </p>
                                 <Link
                                     href="/auth/signin"
                                     className="inline-flex items-center gap-2 rounded-lg bg-yellow-500 px-4 py-2 text-sm font-medium text-black hover:bg-yellow-400 transition-colors"
                                 >
                                     <LogIn className="h-4 w-4" />
-                                    Sign In to Continue
+                                    Sign In to Get 50 Credits
                                 </Link>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+
+                {/* No Credits Warning for Authenticated Users */}
+                {isAuthenticated && isMounted && remainingCredits === 0 && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-6 rounded-lg border border-red-500/30 bg-red-500/10 p-4"
+                    >
+                        <div className="flex items-start gap-3">
+                            <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
+                            <div className="flex-1">
+                                <h3 className="font-semibold text-red-500 mb-1">
+                                    No Credits Remaining
+                                </h3>
+                                <p className="text-sm text-neutral-300">
+                                    You've used all your credits. Please contact support to get more credits.
+                                </p>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+
+                {/* Low Credits Warning for Authenticated Users */}
+                {isAuthenticated && isMounted && remainingCredits > 0 && remainingCredits <= 5 && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-6 rounded-lg border border-orange-500/30 bg-orange-500/10 p-4"
+                    >
+                        <div className="flex items-start gap-3">
+                            <AlertCircle className="h-5 w-5 text-orange-500 mt-0.5 flex-shrink-0" />
+                            <div className="flex-1">
+                                <p className="text-sm text-neutral-300">
+                                    You have {remainingCredits} {remainingCredits === 1 ? 'credit' : 'credits'} remaining. Plan accordingly!
+                                </p>
                             </div>
                         </div>
                     </motion.div>
@@ -137,14 +186,14 @@ export default function UploadPage() {
                     >
                         <div className="inline-block rounded-lg border border-neutral-800 bg-neutral-900/50 p-6">
                             <p className="text-neutral-400 mb-3">
-                                Want unlimited analyses and save your results?
+                                Want 50 credits and save your results?
                             </p>
                             <Link
                                 href="/auth/signin"
                                 className="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-2.5 text-sm font-medium text-black hover:bg-neutral-200 transition-colors"
                             >
                                 <LogIn className="h-4 w-4" />
-                                Sign In for Free
+                                Sign In to Get 50 Credits
                             </Link>
                         </div>
                     </motion.div>
