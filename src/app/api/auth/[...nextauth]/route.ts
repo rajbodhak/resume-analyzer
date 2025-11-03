@@ -35,13 +35,13 @@ export const authOptions: NextAuthOptions = {
 
                     // Handle case where user exists but hasn't been updated yet
                     token.subscriptionTier = dbUser?.subscriptionTier ?? "free";
-                    token.creditsRemaining = dbUser?.creditsRemaining ?? 5;
+                    token.creditsRemaining = dbUser?.creditsRemaining ?? 50;
                     token.analysesCount = dbUser?.analysesCount ?? 0;
                 } catch (error) {
                     console.error("Error fetching user from database:", error);
                     // Fallback to defaults
                     token.subscriptionTier = "free";
-                    token.creditsRemaining = 5;
+                    token.creditsRemaining = 50;
                     token.analysesCount = 0;
                 }
             }
@@ -88,7 +88,7 @@ export const authOptions: NextAuthOptions = {
                 await prisma.user.update({
                     where: { id: user.id },
                     data: {
-                        creditsRemaining: 5,
+                        creditsRemaining: 50,
                         subscriptionTier: "free",
                         analysesCount: 0,
                     }

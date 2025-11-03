@@ -30,7 +30,7 @@ model User {
   analysesCount    Int       @default(0)
   lastAnalysisAt   DateTime?
   subscriptionTier String    @default("free")
-  creditsRemaining Int       @default(5)
+  creditsRemaining Int       @default(50)
 
   // Relations
   analyses     Analysis[]
