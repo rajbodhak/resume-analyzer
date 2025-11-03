@@ -3,15 +3,17 @@
 import { useState, useCallback, useEffect } from 'react';
 import { AnalysisResult } from '../types/analysis';
 import { useAuthStore } from '@/lib/stores/auth-store';
+import { useSession } from 'next-auth/react';
 
 export function useResumeAnalysis() {
+    const { data: session, update: updateSession } = useSession();
     const {
         user,
         hasCreditsAvailable,
         getRemainingCredits,
         decrementAnonymousCredit,
         incrementAnonymousCredit,
-        incrementAnalysisCount
+        updateCredits,
     } = useAuthStore();
 
     const isAuthenticated = !!user;
@@ -32,15 +34,14 @@ export function useResumeAnalysis() {
     // Update credits only on client-side
     useEffect(() => {
         setIsMounted(true);
-        setRemainingCredits(getRemainingCredits());
-    }, [getRemainingCredits]);
-
-    // Update credits when they change
-    useEffect(() => {
-        if (isMounted) {
+        if (isAuthenticated && session?.user?.creditsRemaining !== undefined) {
+            // Show actual credits for authenticated users
+            setRemainingCredits(session.user.creditsRemaining);
+        } else {
+            // Show anonymous credits
             setRemainingCredits(getRemainingCredits());
         }
-    }, [user, isMounted, getRemainingCredits]);
+    }, [isAuthenticated, session, getRemainingCredits]);
 
     const validateFile = useCallback((selectedFile: File): boolean => {
         const validTypes = [
@@ -121,11 +122,21 @@ export function useResumeAnalysis() {
     const analyzeResume = useCallback(async () => {
         if (!file) return;
 
-        // CHECK CREDITS BEFORE ANALYSIS using Zustand store
-        if (!hasCreditsAvailable()) {
-            setNeedsLogin(true);
-            setError('You have used all 3 free analyses. Please sign in to continue.');
-            return;
+        // CHECK CREDITS BEFORE ANALYSIS
+        if (isAuthenticated) {
+            // For authenticated users, check session credits
+            if (session?.user?.creditsRemaining !== undefined && session.user.creditsRemaining <= 0) {
+                setNeedsLogin(false);
+                setError('You have used all your credits. Please contact support to get more.');
+                return;
+            }
+        } else {
+            // For anonymous users, check Zustand store
+            if (!hasCreditsAvailable()) {
+                setNeedsLogin(true);
+                setError('You have used all 3 free analyses. Please sign in to get 50 credits.');
+                return;
+            }
         }
 
         setIsAnalyzing(true);
@@ -145,7 +156,7 @@ export function useResumeAnalysis() {
                 }
             }
 
-            //  DECREMENT CREDIT BEFORE API CALL (for anonymous users only)
+            // DECREMENT CREDIT BEFORE API CALL (for anonymous users only)
             if (!isAuthenticated) {
                 creditDecremented = decrementAnonymousCredit();
                 if (!creditDecremented) {
@@ -183,17 +194,38 @@ export function useResumeAnalysis() {
 
             setAnalysisResult(data.analysis);
 
-            // Increment analysis count for logged-in users
-            if (isAuthenticated) {
-                incrementAnalysisCount();
-            }
+            //UPDATE CREDITS FOR AUTHENTICATED USERS
+            if (isAuthenticated && data.creditsRemaining !== undefined) {
+                // Update Zustand store
+                updateCredits(data.creditsRemaining);
 
-            // Update credits and show login prompt if needed
-            const newCredits = getRemainingCredits();
-            setRemainingCredits(newCredits);
+                // Update session
+                await updateSession({
+                    creditsRemaining: data.creditsRemaining,
+                    analysesCount: data.analysesCount,
+                });
 
-            if (!isAuthenticated && newCredits <= 0) {
-                setNeedsLogin(true);
+                // Update local state
+                setRemainingCredits(data.creditsRemaining);
+
+                console.log(` Credits updated: ${data.creditsRemaining} remaining`);
+
+                // Show warning if credits are low
+                if (data.creditsRemaining <= 5) {
+                    setError(`Analysis complete! You have ${data.creditsRemaining} credits remaining.`);
+                }
+
+                if (data.creditsRemaining <= 0) {
+                    setError('You have used all your credits. Please contact support to get more.');
+                }
+            } else if (!isAuthenticated) {
+                // Update anonymous credits display
+                const newCredits = getRemainingCredits();
+                setRemainingCredits(newCredits);
+
+                if (newCredits <= 0) {
+                    setNeedsLogin(true);
+                }
             }
 
         } catch (err) {
@@ -201,6 +233,7 @@ export function useResumeAnalysis() {
             setError(errorMessage);
             console.error('Analysis error:', err);
 
+            // ROLLBACK CREDIT FOR ANONYMOUS USERS ON FAILURE
             if (!isAuthenticated && creditDecremented) {
                 incrementAnonymousCredit();
                 setRemainingCredits(getRemainingCredits());
@@ -215,11 +248,13 @@ export function useResumeAnalysis() {
         resumeText,
         parseResume,
         isAuthenticated,
+        session,
         hasCreditsAvailable,
         getRemainingCredits,
         decrementAnonymousCredit,
         incrementAnonymousCredit,
-        incrementAnalysisCount
+        updateCredits,
+        updateSession,
     ]);
 
     return {
