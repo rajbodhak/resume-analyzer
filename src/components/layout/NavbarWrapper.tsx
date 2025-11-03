@@ -1,17 +1,43 @@
 'use client';
 
 import { useAuthStore } from '@/lib/stores/auth-store';
-import { signOut } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
+import { Session } from 'next-auth';
+import { useEffect } from 'react';
 import Navbar from "./Navbar";
 
-export default function NavbarWrapper() {
+interface NavbarWrapperProps {
+    initialSession: Session | null;
+}
+
+export default function NavbarWrapper({ initialSession }: NavbarWrapperProps) {
+    const { data: clientSession } = useSession();
     const user = useAuthStore((state) => state.user);
-    const isAuthenticated = !!user;
+    const setUser = useAuthStore((state) => state.setUser);
+
+    // Initialize Zustand store with server session on mount
+    useEffect(() => {
+        if (initialSession?.user && !user) {
+            setUser({
+                id: initialSession.user.id,
+                email: initialSession.user.email ?? '',
+                name: initialSession.user.name ?? undefined,
+                image: initialSession.user.image ?? undefined,
+                subscriptionTier: initialSession.user.subscriptionTier,
+                creditsRemaining: initialSession.user.creditsRemaining,
+                analysesCount: initialSession.user.analysesCount,
+            });
+        }
+    }, [initialSession, user, setUser]);
+
+    // Use client session if available, otherwise use initial server session
+    const currentSession = clientSession ?? initialSession;
+    const isAuthenticated = !!currentSession?.user;
+    const userName = currentSession?.user?.name || currentSession?.user?.email || 'User';
 
     const handleSignOut = async () => {
         try {
             await signOut({ callbackUrl: '/' });
-            // Clear auth store if needed
             useAuthStore.getState().setUser(null);
         } catch (error) {
             console.error('Sign out error:', error);
@@ -23,7 +49,7 @@ export default function NavbarWrapper() {
             logoText="Resume Analyzer"
             logoHref="/"
             isAuthenticated={isAuthenticated}
-            userName={user?.name || user?.email || 'User'}
+            userName={userName}
 
             // Non-authenticated actions
             onSignInClick={() => {

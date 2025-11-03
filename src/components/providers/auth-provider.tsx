@@ -3,24 +3,24 @@
 import { SessionProvider, useSession } from 'next-auth/react';
 import { useEffect } from 'react';
 import { useAuthStore } from '@/lib/stores/auth-store';
+import { Session } from 'next-auth';
 
 function AuthSync() {
     const { data: session, status } = useSession();
     const setUser = useAuthStore((state) => state.setUser);
 
     useEffect(() => {
-        if (status === 'loading') return;
-
-        if (session?.user) {
+        if (status === 'authenticated' && session?.user) {
             setUser({
                 id: session.user.id,
-                email: session.user.email,
-                name: session.user.name,
+                email: session.user.email ?? '',
+                name: session.user.name ?? undefined,
+                image: session.user.image ?? undefined,
                 subscriptionTier: session.user.subscriptionTier,
                 creditsRemaining: session.user.creditsRemaining,
                 analysesCount: session.user.analysesCount,
             });
-        } else {
+        } else if (status === 'unauthenticated') {
             setUser(null);
         }
     }, [session, status, setUser]);
@@ -30,14 +30,13 @@ function AuthSync() {
 
 export default function AuthProvider({
     children,
+    session,
 }: {
     children: React.ReactNode;
+    session: Session | null;
 }) {
     return (
-        <SessionProvider 
-            refetchInterval={5 * 60} // Refetch session every 5 minutes
-            refetchOnWindowFocus={true}
-        >
+        <SessionProvider session={session}>
             <AuthSync />
             {children}
         </SessionProvider>
