@@ -135,8 +135,6 @@ export async function saveAnalysisToDatabase(params: SaveAnalysisParams): Promis
             },
         });
 
-        console.log(`✅ Analysis saved successfully with ID: ${savedAnalysis.id}`);
-
         return {
             success: true,
             analysisId: savedAnalysis.id,

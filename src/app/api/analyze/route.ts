@@ -85,8 +85,6 @@ export async function POST(request: NextRequest) {
                 );
             }
 
-            console.log(`User has ${user.creditsRemaining} credits remaining`);
-
             // Apply rate limit: 10 analyses per hour
             const rateLimitResult = analysisRateLimit.checkWithInfo(10, userId);
 
@@ -101,10 +99,9 @@ export async function POST(request: NextRequest) {
                 );
             }
 
-            console.log(`Rate limit check passed. Remaining: ${rateLimitResult.remaining}`);
         } else {
             // Anonymous users - no rate limiting on backend
-            console.log('Anonymous user analysis - no rate limiting applied');
+            console.error('Anonymous user analysis - no rate limiting applied');
         }
 
         // Call AI analysis
@@ -180,8 +177,6 @@ export async function POST(request: NextRequest) {
                         analysesCount: updatedUser.analysesCount,
                     };
                 });
-
-                console.log(`Analysis saved. Credits remaining: ${result.creditsRemaining}`);
 
                 return NextResponse.json({
                     success: true,

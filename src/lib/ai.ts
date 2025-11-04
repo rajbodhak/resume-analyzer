@@ -138,7 +138,6 @@ export async function analyzeResume(resumeText: string, jobDescription?: string)
             });
 
             // Send analysis request with timeout
-            console.log(`🤖 Sending analysis request (attempt ${attempt}/${maxRetries})...`);
             const result = await Promise.race([
                 chat.sendMessage(userPrompt),
                 new Promise((_, reject) =>
@@ -165,7 +164,6 @@ export async function analyzeResume(resumeText: string, jobDescription?: string)
                 console.warn('Received data:', JSON.stringify(analysisData, null, 2).substring(0, 300));
 
                 if (attempt < maxRetries) {
-                    console.log(`🔄 Retrying... (${attempt + 1}/${maxRetries})`);
                     await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
                     continue;
                 }
@@ -174,7 +172,6 @@ export async function analyzeResume(resumeText: string, jobDescription?: string)
             }
 
             // Success!
-            console.log(`✅ Analysis completed successfully on attempt ${attempt}`);
             return {
                 success: true,
                 data: analysisData,

@@ -89,16 +89,11 @@ export const authOptions: NextAuthOptions = {
                         analysesCount: 0,
                     }
                 });
-                console.log("New user initialized with 50 credits:", user.id);
             } catch (error) {
                 console.error("Error initializing user defaults:", error);
             }
         },
 
-        // Log when user signs in
-        async signIn({ user }) {
-            console.log("User signed in:", user.email);
-        },
     },
 
     pages: {

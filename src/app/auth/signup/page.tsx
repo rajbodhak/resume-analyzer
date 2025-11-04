@@ -18,7 +18,6 @@ const SignupPage = () => {
     // Redirect if already authenticated
     useEffect(() => {
         if (status === 'authenticated' && session) {
-            console.log('User authenticated, redirecting to dashboard');
             router.push('/dashboard');
             router.refresh();
         }
@@ -131,7 +130,7 @@ const SignupPage = () => {
                             <ul className="space-y-2 text-sm text-muted-foreground">
                                 <li className="flex items-center gap-2">
                                     <span className="text-green-400">✓</span>
-                                    5 free resume analyses
+                                    50 free resume analyses
                                 </li>
                                 <li className="flex items-center gap-2">
                                     <span className="text-green-400">✓</span>

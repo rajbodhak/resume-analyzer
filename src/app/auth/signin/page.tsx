@@ -22,7 +22,6 @@ function LoginContent() {
     // Redirect if already authenticated
     useEffect(() => {
         if (status === 'authenticated' && session) {
-            console.log('User authenticated, redirecting to:', callbackUrl);
             router.push(callbackUrl);
             router.refresh();
         }
@@ -130,7 +129,7 @@ function LoginContent() {
 
                         <div className="rounded-lg bg-blue-500/10 p-4 text-center">
                             <p className="text-sm font-medium text-blue-400">
-                                🎁 Get 5 free analyses when you sign in!
+                                🎁 Get 50 free analyses when you sign in!
                             </p>
                         </div>
                     </CardContent>

@@ -208,8 +208,6 @@ export function useResumeAnalysis() {
                 // Update local state
                 setRemainingCredits(data.creditsRemaining);
 
-                console.log(` Credits updated: ${data.creditsRemaining} remaining`);
-
                 // Show warning if credits are low
                 if (data.creditsRemaining <= 5) {
                     setError(`Analysis complete! You have ${data.creditsRemaining} credits remaining.`);
@@ -237,7 +235,6 @@ export function useResumeAnalysis() {
             if (!isAuthenticated && creditDecremented) {
                 incrementAnonymousCredit();
                 setRemainingCredits(getRemainingCredits());
-                console.log('Credit restored due to analysis failure');
             }
         } finally {
             setIsAnalyzing(false);
