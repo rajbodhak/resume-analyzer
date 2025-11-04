@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 import { analyzeResume } from '@/lib/ai';
 import { analysisRateLimit } from '@/lib/rate-limit';
 import { validateAnalysisResult, saveAnalysisToDatabase } from '@/lib/db-helper';
