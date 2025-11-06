@@ -126,7 +126,7 @@ export default function SettingsPage() {
 
     if (isLoading) {
         return (
-            <div className="container mx-auto px-4 py-8 max-w-4xl md:mt-10">
+            <div className="container mx-auto px-4 py-8 max-w-4xl ">
                 <div className="space-y-6">
                     <div className="h-8 bg-muted rounded animate-pulse w-1/3" />
                     <Card>
@@ -145,7 +145,7 @@ export default function SettingsPage() {
     }
 
     return (
-        <div className="container mx-auto px-4 py-8 max-w-4xl md:mt-10">
+        <div className="container mx-auto px-4 py-8 max-w-4xl ">
             <div className="space-y-6">
                 {/* Header */}
                 <div>

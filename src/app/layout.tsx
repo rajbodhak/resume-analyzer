@@ -36,8 +36,10 @@ export default async function RootLayout({
           {/* Navbar with initial session */}
           <NavbarWrapper initialSession={session} />
 
-          {/* All pages content */}
-          {children}
+          {/* Main content with top padding to account for fixed navbar */}
+          <main className="pt-16 sm:pt-16 md:pt-16">
+            {children}
+          </main>
         </AuthProvider>
       </body>
     </html>
