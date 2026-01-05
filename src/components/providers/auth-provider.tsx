@@ -3,14 +3,17 @@
 import { SessionProvider, useSession } from 'next-auth/react';
 import { useEffect } from 'react';
 import { useAuthStore } from '@/lib/stores/auth-store';
-import { Session } from 'next-auth';
 
 function AuthSync() {
     const { data: session, status } = useSession();
     const setUser = useAuthStore((state) => state.setUser);
 
     useEffect(() => {
+        console.log('AuthSync - Status:', status);
+        console.log('AuthSync - Session:', session);
+
         if (status === 'authenticated' && session?.user) {
+            console.log('Setting user in store:', session.user);
             setUser({
                 id: session.user.id,
                 email: session.user.email ?? '',
@@ -21,6 +24,7 @@ function AuthSync() {
                 analysesCount: session.user.analysesCount,
             });
         } else if (status === 'unauthenticated') {
+            console.log('User unauthenticated, clearing store');
             setUser(null);
         }
     }, [session, status, setUser]);
@@ -30,13 +34,11 @@ function AuthSync() {
 
 export default function AuthProvider({
     children,
-    session,
 }: {
     children: React.ReactNode;
-    session: Session | null;
 }) {
     return (
-        <SessionProvider session={session}>
+        <SessionProvider>
             <AuthSync />
             {children}
         </SessionProvider>
