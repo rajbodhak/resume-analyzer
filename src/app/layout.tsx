@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import NavbarWrapper from "@/components/layout/NavbarWrapper";
 import AuthProvider from "@/components/providers/auth-provider";
-import { getSession } from "@/lib/auth";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,23 +19,18 @@ export const metadata: Metadata = {
   description: "Analyze your resume with AI-powered insights",
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await getSession();
-
   return (
     <html lang="en" className="dark">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#0a0a0a] text-white`}
       >
-        <AuthProvider session={session}>
-          {/* Navbar with initial session */}
-          <NavbarWrapper initialSession={session} />
-
-          {/* Main content with top padding to account for fixed navbar */}
+        <AuthProvider>
+          <NavbarWrapper />
           <main className="pt-16 sm:pt-16 md:pt-16">
             {children}
           </main>

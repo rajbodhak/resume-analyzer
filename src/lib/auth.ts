@@ -20,7 +20,6 @@ export const authOptions: NextAuthOptions = {
 
     callbacks: {
         async jwt({ token, user, trigger, session }) {
-            // On first sign in
             if (user) {
                 token.id = user.id;
 
@@ -45,7 +44,6 @@ export const authOptions: NextAuthOptions = {
                 }
             }
 
-            // Allow manual token updates
             if (trigger === "update" && session) {
                 token.creditsRemaining = session.creditsRemaining ?? token.creditsRemaining;
                 token.analysesCount = session.analysesCount ?? token.analysesCount;
@@ -65,21 +63,17 @@ export const authOptions: NextAuthOptions = {
         },
 
         async redirect({ url, baseUrl }) {
-            // Allows relative callback URLs
             if (url.startsWith("/")) return `${baseUrl}${url}`;
-            // Allows callback URLs on the same origin
             else if (new URL(url).origin === baseUrl) return url;
-            // Default redirect to dashboard after sign in
             return `${baseUrl}/dashboard`;
         },
 
         async signIn({ user, account, profile }) {
-            return true; // Allow sign in
+            return true;
         },
     },
 
     events: {
-        // This runs AFTER user is created
         async createUser({ user }) {
             try {
                 await prisma.user.update({
