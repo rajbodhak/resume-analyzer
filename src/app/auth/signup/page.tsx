@@ -15,11 +15,9 @@ const SignupPage = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
 
-    // Redirect if already authenticated
     useEffect(() => {
         if (status === 'authenticated' && session) {
             router.push('/dashboard');
-            router.refresh();
         }
     }, [status, session, router]);
 
@@ -28,22 +26,10 @@ const SignupPage = () => {
         setError('');
 
         try {
-            const result = await signIn('google', {
+            await signIn('google', {
                 callbackUrl: '/dashboard',
-                redirect: false,
+                redirect: true,
             });
-
-            if (result?.error) {
-                console.error('Sign up error:', result.error);
-                setError('Failed to create account. Please try again.');
-                setIsLoading(false);
-            } else if (result?.ok) {
-                // Wait a moment for session to update, then redirect
-                setTimeout(() => {
-                    router.push('/dashboard');
-                    router.refresh();
-                }, 500);
-            }
         } catch (error) {
             console.error('Sign up error:', error);
             setError('Failed to create account. Please try again.');
@@ -51,7 +37,6 @@ const SignupPage = () => {
         }
     };
 
-    // Show loading if checking authentication
     if (status === 'loading') {
         return (
             <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a]">
@@ -60,7 +45,6 @@ const SignupPage = () => {
         );
     }
 
-    // Don't show signup form if already authenticated
     if (status === 'authenticated') {
         return (
             <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a]">

@@ -19,11 +19,9 @@ function LoginContent() {
 
     const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
 
-    // Redirect if already authenticated
     useEffect(() => {
         if (status === 'authenticated' && session) {
             router.push(callbackUrl);
-            router.refresh();
         }
     }, [status, session, callbackUrl, router]);
 
@@ -32,22 +30,10 @@ function LoginContent() {
         setError('');
 
         try {
-            const result = await signIn('google', {
+            await signIn('google', {
                 callbackUrl,
-                redirect: false, // Change to false to handle manually
+                redirect: true,
             });
-
-            if (result?.error) {
-                console.error('Sign in error:', result.error);
-                setError('Failed to sign in. Please try again.');
-                setIsLoading(false);
-            } else if (result?.ok) {
-                // Wait a moment for session to update, then redirect
-                setTimeout(() => {
-                    router.push(callbackUrl);
-                    router.refresh();
-                }, 500);
-            }
         } catch (error) {
             console.error('Sign in error:', error);
             setError('Failed to sign in. Please try again.');
@@ -55,7 +41,6 @@ function LoginContent() {
         }
     };
 
-    // Show loading if checking authentication
     if (status === 'loading') {
         return (
             <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a]">
@@ -64,7 +49,6 @@ function LoginContent() {
         );
     }
 
-    // Don't show login form if already authenticated
     if (status === 'authenticated') {
         return (
             <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a]">
@@ -153,7 +137,7 @@ function LoginContent() {
 const LoginPage = () => {
     return (
         <Suspense fallback={
-            <div className="flex min-h-screen items-center justify-center">
+            <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a]">
                 <div className="size-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
             </div>
         }>
