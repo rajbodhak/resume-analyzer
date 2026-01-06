@@ -391,63 +391,63 @@ Focus on helping the candidate tell their story effectively and handle challengi
  * Helper function to replace placeholders in prompts
  */
 export function fillPromptTemplate(
-    template: string,
-    variables: Record<string, string>
+  template: string,
+  variables: Record<string, string>
 ): string {
-    let filledPrompt = template;
+  let filledPrompt = template;
 
-    for (const [key, value] of Object.entries(variables)) {
-        const placeholder = `{${key}}`;
-        filledPrompt = filledPrompt.replace(new RegExp(placeholder, 'g'), value);
-    }
+  for (const [key, value] of Object.entries(variables)) {
+    const placeholder = `{${key}}`;
+    filledPrompt = filledPrompt.replace(new RegExp(placeholder, 'g'), value);
+  }
 
-    return filledPrompt;
+  return filledPrompt;
 }
 
 /**
  * Prompt configuration with metadata
  */
 export const PROMPT_CONFIG = {
-    resumeAnalysis: {
-        system: RESUME_ANALYSIS_SYSTEM_PROMPT,
-        user: RESUME_ANALYSIS_PROMPT,
-        maxTokens: 2000,
-        temperature: 0.3,
-    },
-    jobMatch: {
-        system: RESUME_ANALYSIS_SYSTEM_PROMPT,
-        user: JOB_MATCH_ANALYSIS_PROMPT,
-        maxTokens: 1500,
-        temperature: 0.2,
-    },
-    coverLetter: {
-        system: "You are an expert cover letter writer focused on creating compelling, personalized content.",
-        user: COVER_LETTER_GENERATION_PROMPT,
-        maxTokens: 800,
-        temperature: 0.7,
-    },
-    improvement: {
-        system: "You are a professional resume writer specializing in impactful, ATS-optimized content.",
-        user: RESUME_IMPROVEMENT_PROMPT,
-        maxTokens: 1200,
-        temperature: 0.5,
-    },
-    skillsGap: {
-        system: "You are a career development expert specializing in skill assessment and learning paths.",
-        user: SKILLS_GAP_ANALYSIS_PROMPT,
-        maxTokens: 1500,
-        temperature: 0.3,
-    },
-    keywordOptimization: {
-        system: "You are an ATS optimization specialist focused on keyword strategy.",
-        user: KEYWORD_OPTIMIZATION_PROMPT,
-        maxTokens: 1000,
-        temperature: 0.2,
-    },
-    interviewPrep: {
-        system: "You are an experienced interview coach helping candidates prepare effectively.",
-        user: INTERVIEW_PREP_PROMPT,
-        maxTokens: 1800,
-        temperature: 0.4,
-    },
+  resumeAnalysis: {
+    system: RESUME_ANALYSIS_SYSTEM_PROMPT,
+    user: RESUME_ANALYSIS_PROMPT,
+    maxTokens: 2048,
+    temperature: 0.3,
+  },
+  jobMatch: {
+    system: RESUME_ANALYSIS_SYSTEM_PROMPT,
+    user: JOB_MATCH_ANALYSIS_PROMPT,
+    maxTokens: 1500,
+    temperature: 0.2,
+  },
+  coverLetter: {
+    system: "You are an expert cover letter writer focused on creating compelling, personalized content.",
+    user: COVER_LETTER_GENERATION_PROMPT,
+    maxTokens: 2048,
+    temperature: 0.7,
+  },
+  improvement: {
+    system: "You are a professional resume writer specializing in impactful, ATS-optimized content.",
+    user: RESUME_IMPROVEMENT_PROMPT,
+    maxTokens: 1200,
+    temperature: 0.5,
+  },
+  skillsGap: {
+    system: "You are a career development expert specializing in skill assessment and learning paths.",
+    user: SKILLS_GAP_ANALYSIS_PROMPT,
+    maxTokens: 1500,
+    temperature: 0.3,
+  },
+  keywordOptimization: {
+    system: "You are an ATS optimization specialist focused on keyword strategy.",
+    user: KEYWORD_OPTIMIZATION_PROMPT,
+    maxTokens: 1000,
+    temperature: 0.2,
+  },
+  interviewPrep: {
+    system: "You are an experienced interview coach helping candidates prepare effectively.",
+    user: INTERVIEW_PREP_PROMPT,
+    maxTokens: 1800,
+    temperature: 0.4,
+  },
 } as const;

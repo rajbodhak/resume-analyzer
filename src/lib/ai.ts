@@ -215,10 +215,10 @@ export async function generateCoverLetter(
         }
 
         const model = genAI.getGenerativeModel({
-            model: "gemini-2.0-flash-exp",
+            model: "gemini-2.5-flash",
             generationConfig: {
                 temperature: 0.7,
-                maxOutputTokens: 800,
+                maxOutputTokens: 2048,
             },
         });
 
@@ -266,10 +266,10 @@ export async function getImprovementSuggestions(
 ) {
     try {
         const model = genAI.getGenerativeModel({
-            model: "gemini-2.0-flash-exp",
+            model: "gemini-2.5-flash",
             generationConfig: {
                 temperature: 0.5,
-                maxOutputTokens: 1200,
+                maxOutputTokens: 2048,
                 responseMimeType: "application/json",
             },
         });
@@ -306,7 +306,7 @@ export async function getImprovementSuggestions(
  */
 export async function testGeminiConnection() {
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         const result = await model.generateContent("Say 'Connection successful' if you can read this.");
         return {
             success: true,

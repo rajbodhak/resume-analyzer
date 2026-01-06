@@ -37,6 +37,7 @@ model User {
   savedResumes SavedResume[]
   accounts     Account[]
   sessions     Session[]
+  coverLetters CoverLetter[]
 
   @@index([email])
   @@index([createdAt])
@@ -127,4 +128,18 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model CoverLetter {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName    String
+  positionTitle  String
+  content        String   @db.Text
+  jobDescription String   @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId])
 }
