@@ -128,11 +128,11 @@ export async function analyzeResume(resumeText: string, jobDescription?: string)
                 history: [
                     {
                         role: "user",
-                        parts: [{ text: RESUME_ANALYSIS_SYSTEM_PROMPT }],
+                        parts: [{ text: RESUME_ANALYSIS_SYSTEM_PROMPT + "\n\nIMPORTANT: Keep all responses concise. Return ONLY valid JSON with no truncation." }],
                     },
                     {
                         role: "model",
-                        parts: [{ text: "Understood. I will provide detailed, professional resume analysis with actionable feedback." }],
+                        parts: [{ text: "Understood. I will provide detailed, professional resume analysis with actionable feedback in valid JSON format." }],
                     },
                 ],
             });
@@ -153,7 +153,8 @@ export async function analyzeResume(resumeText: string, jobDescription?: string)
             try {
                 analysisData = JSON.parse(text);
             } catch (parseError) {
-                console.error(`❌ Failed to parse AI response (attempt ${attempt}):`, text.substring(0, 200));
+                console.error(`❌ Failed to parse AI response (attempt ${attempt}):`);
+                console.error('FULL RESPONSE:', text);
                 throw new Error("AI returned invalid JSON format");
             }
 

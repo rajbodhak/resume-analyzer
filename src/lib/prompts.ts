@@ -22,62 +22,65 @@ Key areas to evaluate:
  * Main resume analysis prompt
  * Analyzes resume content and returns structured feedback
  */
-export const RESUME_ANALYSIS_PROMPT = `Analyze the following resume and provide a comprehensive evaluation. Return your analysis in the following JSON structure:
+export const RESUME_ANALYSIS_PROMPT = `Analyze the following resume and provide a comprehensive evaluation. Return your analysis as valid JSON with this structure:
 
 {
   "overallScore": <number 0-100>,
   "atsScore": <number 0-100>,
-  "summary": "<2-3 sentence overview of the resume's strengths and weaknesses>",
+  "summary": "<brief 2-3 sentence overview>",
   "strengths": [
-    "<specific strength with example from resume>",
-    ...
+    "<strength 1>",
+    "<strength 2>",
+    "<strength 3>"
   ],
   "weaknesses": [
-    "<specific weakness with example from resume>",
-    ...
+    "<weakness 1>",
+    "<weakness 2>",
+    "<weakness 3>"
   ],
   "detailedAnalysis": {
     "atsCompatibility": {
       "score": <number 0-100>,
-      "issues": ["<specific ATS issue>", ...],
-      "recommendations": ["<specific fix>", ...]
+      "issues": ["<issue 1>", "<issue 2>"],
+      "recommendations": ["<rec 1>", "<rec 2>"]
     },
     "contentQuality": {
       "score": <number 0-100>,
-      "issues": ["<content issue>", ...],
-      "recommendations": ["<improvement suggestion>", ...]
+      "issues": ["<issue 1>"],
+      "recommendations": ["<rec 1>"]
     },
     "structure": {
       "score": <number 0-100>,
-      "issues": ["<structure issue>", ...],
-      "recommendations": ["<improvement suggestion>", ...]
+      "issues": ["<issue 1>"],
+      "recommendations": ["<rec 1>"]
     },
     "keywords": {
       "score": <number 0-100>,
-      "present": ["<keyword found>", ...],
-      "missing": ["<important keyword missing>", ...],
-      "recommendations": ["<keyword suggestion>", ...]
+      "present": ["<keyword 1>", "<keyword 2>"],
+      "missing": ["<keyword 1>", "<keyword 2>"],
+      "recommendations": ["<rec 1>"]
     }
   },
   "actionableSteps": [
     {
-      "priority": "<high/medium/low>",
-      "category": "<category name>",
-      "action": "<specific action to take>",
-      "impact": "<expected improvement>"
-    },
-    ...
+      "priority": "high",
+      "category": "<category>",
+      "action": "<action>",
+      "impact": "<impact>"
+    }
   ],
   "industryBenchmark": {
     "performanceLevel": "<beginner/intermediate/advanced/expert>",
-    "comparison": "<how this resume compares to industry standards>"
+    "comparison": "<brief comparison>"
   }
 }
+
+IMPORTANT: Keep all text concise. Limit arrays to 3-5 items maximum. Keep descriptions under 100 characters each.
 
 Resume Content:
 {resumeText}
 
-Provide honest, specific feedback with concrete examples from the resume. Focus on actionable improvements that will have the biggest impact.`;
+Return ONLY valid JSON. No markdown, no code blocks, just the JSON object.`;
 
 /**
  * Job match analysis prompt
@@ -411,7 +414,7 @@ export const PROMPT_CONFIG = {
   resumeAnalysis: {
     system: RESUME_ANALYSIS_SYSTEM_PROMPT,
     user: RESUME_ANALYSIS_PROMPT,
-    maxTokens: 2048,
+    maxTokens: 4096,
     temperature: 0.3,
   },
   jobMatch: {
