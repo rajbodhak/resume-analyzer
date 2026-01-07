@@ -269,5 +269,6 @@ export function useResumeAnalysis() {
         needsLogin,
         isAuthenticated,
         isMounted,
+        resumeText,
     };
 }
