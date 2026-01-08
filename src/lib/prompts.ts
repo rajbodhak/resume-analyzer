@@ -136,12 +136,12 @@ Resume Content:
 Be specific and provide actionable recommendations to improve the match score.`;
 
 /**
- * Cover letter generation prompt
+ * Cover letter generation prompt - FIXED VERSION
  * Creates a tailored cover letter based on resume and job description
  */
 export const COVER_LETTER_GENERATION_PROMPT = `You are an expert cover letter writer with extensive experience in helping candidates craft compelling, personalized cover letters that get interviews.
 
-Based on the provided resume and job description, create a professional cover letter that:
+Based on the provided information, create a professional cover letter that:
 - Opens with a strong hook that shows genuine interest
 - Highlights 2-3 most relevant achievements from the resume
 - Demonstrates understanding of the company and role
@@ -150,6 +150,13 @@ Based on the provided resume and job description, create a professional cover le
 - Is concise (250-350 words)
 - Uses active voice and strong action verbs
 - Avoids clichés and generic statements
+
+IMPORTANT FORMATTING INSTRUCTIONS:
+- Start directly with the candidate's name on the first line (no labels like "[Your Name]")
+- Use proper letter formatting with actual values, not placeholders
+- Write in a natural, professional tone
+- Do NOT include any bracketed instructions like [Your Address], [Date], etc.
+- Use the actual company name and position title provided
 
 Job Description:
 {jobDescription}
@@ -161,7 +168,31 @@ Company Name: {companyName}
 Position: {positionTitle}
 Candidate Name: {candidateName}
 
-Generate a cover letter that feels authentic, specific, and compelling. Focus on value proposition and impact, not just listing qualifications.`;
+OUTPUT FORMAT (use actual values, no brackets):
+
+{candidateName}
+[Include contact info if available in resume, otherwise skip this line]
+
+[Current Date]
+
+{companyName} Hiring Team
+
+Dear {companyName} Hiring Team,
+
+[Opening paragraph with strong hook showing genuine interest in the role]
+
+[Body paragraph 1: Highlight most relevant achievement from resume that matches job requirements]
+
+[Body paragraph 2: Second achievement or skill demonstration with specific examples]
+
+[Optional body paragraph 3: Additional relevant experience or unique value proposition]
+
+[Closing paragraph with call to action and enthusiasm]
+
+Sincerely,
+{candidateName}
+
+Generate the cover letter now. Output ONLY the formatted letter with actual values filled in. No explanations, no additional text.`;
 
 /**
  * Resume improvement suggestions prompt

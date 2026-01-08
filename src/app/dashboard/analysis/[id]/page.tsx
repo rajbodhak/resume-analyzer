@@ -7,6 +7,7 @@ import { ArrowLeft, Loader2 } from 'lucide-react';
 import { ResumeAnalysis } from '@/components/upload/ResumeAnalysis';
 import { JobMatchAnalysis } from '@/components/upload/JobMatchAnalysis';
 import { isJobMatchResult, AnalysisResult } from '@/types/analysis';
+import GenerateCoverLetterButton from '@/components/upload/GenerateCoverLetterButton';
 
 export default function AnalysisDetailsPage() {
     const router = useRouter();
@@ -144,6 +145,11 @@ export default function AnalysisDetailsPage() {
 
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-3">
+                    //Generate Cover Letter Button
+                    <GenerateCoverLetterButton
+                        resumeText={analysis.resumeText}
+                        analysisId={analysisId}
+                    />
                     <Button
                         onClick={() => router.push('/upload')}
                         variant="outline"

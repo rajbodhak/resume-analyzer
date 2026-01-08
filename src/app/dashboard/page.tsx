@@ -14,6 +14,7 @@ import {
 import { AnalysisCard } from '@/components/dashboard/AnalysisCard';
 import { AnalysisCardSkeleton } from '@/components/dashboard/AnalysisCardSkeleton';
 import { EmptyAnalysisState } from '@/components/dashboard/EmptyAnalysisState';
+import CoverLetterCard from '@/components/dashboard/CoverLetterCard';
 
 interface DashboardData {
     user: {
@@ -231,6 +232,8 @@ export default function DashboardPage() {
                         </div>
                     </CardContent>
                 </Card>
+
+                <CoverLetterCard />
             </div>
         </div>
     );

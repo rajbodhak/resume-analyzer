@@ -24,6 +24,7 @@ export default function UploadPage() {
         needsLogin,
         isAuthenticated,
         isMounted,
+        resumeText,
     } = useResumeAnalysis();
 
     return (
@@ -172,6 +173,7 @@ export default function UploadPage() {
                         <AnalysisResults
                             result={analysisResult}
                             onAnalyzeAnother={removeFile}
+                            resumeText={resumeText}
                         />
                     </motion.div>
                 )}
