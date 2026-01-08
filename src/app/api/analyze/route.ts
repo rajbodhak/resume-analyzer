@@ -3,8 +3,9 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { analyzeResume } from '@/lib/ai';
 import { analysisRateLimit } from '@/lib/rate-limit';
-import { validateAnalysisResult, saveAnalysisToDatabase } from '@/lib/db-helper';
+import { validateAnalysisResult } from '@/lib/db-helper';
 import { prisma } from '@/lib/prisma';
+import { isJobMatchResult, isResumeAnalysisResult } from '@/types/analysis';
 
 // Helper function to get client IP
 function getClientIp(request: NextRequest): string {
@@ -101,7 +102,7 @@ export async function POST(request: NextRequest) {
 
         } else {
             // Anonymous users - no rate limiting on backend
-            console.error('Anonymous user analysis - no rate limiting applied');
+            console.log('Anonymous user analysis - no rate limiting applied');
         }
 
         // Call AI analysis
@@ -137,9 +138,47 @@ export async function POST(request: NextRequest) {
         if (isAuthenticated && session.user?.id) {
             const userId = session.user.id;
 
+            // Extract data based on analysis type using type guards
+            let overallScore: number;
+            let compatibilityScore: number;
+            let missingKeywords: string[];
+            let foundKeywords: string[];
+            let skillsMatch: any;
+            let improvements: any[];
+            let analysisType: 'job-match' | 'resume-analysis';
+
+            if (isJobMatchResult(analysisData)) {
+                // Job Match Analysis
+                analysisType = 'job-match';
+                overallScore = Math.round(analysisData.matchScore);
+                compatibilityScore = Math.round(analysisData.matchScore);
+                missingKeywords = analysisData.keywordMatch?.missing || [];
+                foundKeywords = analysisData.keywordMatch?.matched || [];
+                skillsMatch = analysisData.skillsMatch || {};
+                improvements = analysisData.recommendedChanges || [];
+            } else if (isResumeAnalysisResult(analysisData)) {
+                // Resume Analysis
+                analysisType = 'resume-analysis';
+                overallScore = Math.round(analysisData.overallScore);
+                compatibilityScore = Math.round(analysisData.atsScore || analysisData.overallScore);
+                missingKeywords = analysisData.detailedAnalysis?.keywords?.missing || [];
+                foundKeywords = analysisData.detailedAnalysis?.keywords?.present || [];
+                skillsMatch = {};
+                improvements = analysisData.actionableSteps || [];
+            } else {
+                // Fallback for unknown type
+                analysisType = jobDescription ? 'job-match' : 'resume-analysis';
+                overallScore = 0;
+                compatibilityScore = 0;
+                missingKeywords = [];
+                foundKeywords = [];
+                skillsMatch = {};
+                improvements = [];
+            }
+
             // DECREMENT CREDITS AND SAVE ANALYSIS IN A TRANSACTION
             try {
-                const result = await prisma.$transaction(async (tx) => {
+                const transactionResult = await prisma.$transaction(async (tx) => {
                     // 1. Decrement user credits
                     const updatedUser = await tx.user.update({
                         where: { id: userId },
@@ -154,20 +193,20 @@ export async function POST(request: NextRequest) {
                         }
                     });
 
-                    // 2. Save analysis
+                    // 2. Save analysis with properly extracted data
                     const analysis = await tx.analysis.create({
                         data: {
                             userId,
-                            resumeText,
-                            jobDescription: jobDescription || '',
-                            originalFileName: undefined,
-                            overallScore: analysisData.overallScore,
-                            compatibilityScore: analysisData.compatibilityScore ?? null,
-                            missingKeywords: analysisData.missingKeywords ?? [], // Default to empty array
-                            foundKeywords: analysisData.foundKeywords ?? [], // Default to empty array
-                            skillsMatch: analysisData.skillsMatch ?? {}, // Default to empty object
-                            improvements: analysisData.improvements ?? [], // Default to empty array
-                            analysisType: jobDescription ? 'job-match' : 'resume-analysis',
+                            resumeText: resumeText.substring(0, 10000), // Limit text length
+                            jobDescription: jobDescription?.substring(0, 5000) || '',
+                            originalFileName: body.originalFileName || null,
+                            overallScore,
+                            compatibilityScore,
+                            missingKeywords,
+                            foundKeywords,
+                            skillsMatch,
+                            improvements,
+                            analysisType,
                         }
                     });
 
@@ -181,10 +220,10 @@ export async function POST(request: NextRequest) {
                 return NextResponse.json({
                     success: true,
                     analysis: analysisData,
-                    analysisId: result.analysisId,
+                    analysisId: transactionResult.analysisId,
                     saved: true,
-                    creditsRemaining: result.creditsRemaining,
-                    analysesCount: result.analysesCount,
+                    creditsRemaining: transactionResult.creditsRemaining,
+                    analysesCount: transactionResult.analysesCount,
                 });
 
             } catch (dbError) {

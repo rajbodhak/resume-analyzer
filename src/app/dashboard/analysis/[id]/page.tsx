@@ -145,7 +145,6 @@ export default function AnalysisDetailsPage() {
 
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-3">
-                    //Generate Cover Letter Button
                     <GenerateCoverLetterButton
                         resumeText={analysis.resumeText}
                         analysisId={analysisId}
