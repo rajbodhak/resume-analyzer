@@ -9,11 +9,7 @@ function AuthSync() {
     const setUser = useAuthStore((state) => state.setUser);
 
     useEffect(() => {
-        console.log('AuthSync - Status:', status);
-        console.log('AuthSync - Session:', session);
-
         if (status === 'authenticated' && session?.user) {
-            console.log('Setting user in store:', session.user);
             setUser({
                 id: session.user.id,
                 email: session.user.email ?? '',
@@ -24,7 +20,6 @@ function AuthSync() {
                 analysesCount: session.user.analysesCount,
             });
         } else if (status === 'unauthenticated') {
-            console.log('User unauthenticated, clearing store');
             setUser(null);
         }
     }, [session, status, setUser]);
@@ -38,7 +33,10 @@ export default function AuthProvider({
     children: React.ReactNode;
 }) {
     return (
-        <SessionProvider>
+        <SessionProvider
+            refetchInterval={5 * 60}
+            refetchOnWindowFocus={false}
+        >
             <AuthSync />
             {children}
         </SessionProvider>
