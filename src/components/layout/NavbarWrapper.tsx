@@ -64,6 +64,9 @@ export default function NavbarWrapper() {
             onNewAnalysisClick={() => {
                 window.location.href = '/upload';
             }}
+            onCoverLetterClick={() => {
+                window.location.href = '/dashboard/cover-letter';
+            }}
             onSignOutClick={handleSignOut}
         />
     );

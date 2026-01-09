@@ -19,6 +19,7 @@ export interface NavbarProps {
     onHistoryClick?: () => void;
     onSettingsClick?: () => void;
     onNewAnalysisClick?: () => void;
+    onCoverLetterClick?: () => void;
 }
 
 export default function Navbar({
@@ -35,6 +36,7 @@ export default function Navbar({
     onHistoryClick,
     onSettingsClick,
     onNewAnalysisClick,
+    onCoverLetterClick,
 }: NavbarProps) {
     const [showSignOutModal, setShowSignOutModal] = useState(false);
 
@@ -77,6 +79,12 @@ export default function Navbar({
                                         className="text-sm font-medium px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
                                     >
                                         History
+                                    </button>
+                                    <button
+                                        onClick={onCoverLetterClick}
+                                        className="text-sm font-medium px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+                                    >
+                                        Cover Letter
                                     </button>
                                 </nav>
 
@@ -121,13 +129,12 @@ export default function Navbar({
                         )}
                     </div>
                 </div>
-            </header >
+            </header>
 
             {/* Sign Out Confirmation Modal */}
-            < SignOutModal
+            <SignOutModal
                 isOpen={showSignOutModal}
-                onClose={() => setShowSignOutModal(false)
-                }
+                onClose={() => setShowSignOutModal(false)}
                 onConfirm={handleSignOutConfirm}
             />
         </>
