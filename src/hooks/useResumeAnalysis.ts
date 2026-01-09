@@ -12,7 +12,6 @@ export function useResumeAnalysis() {
         hasCreditsAvailable,
         getRemainingCredits,
         decrementAnonymousCredit,
-        incrementAnonymousCredit,
         updateCredits,
     } = useAuthStore();
 
@@ -122,7 +121,7 @@ export function useResumeAnalysis() {
     const analyzeResume = useCallback(async () => {
         if (!file) return;
 
-        // CHECK CREDITS BEFORE ANALYSIS
+        // CHECK CREDITS BEFORE ANALYSIS (CLIENT-SIDE CHECK)
         if (isAuthenticated) {
             // For authenticated users, check session credits
             if (session?.user?.creditsRemaining !== undefined && session.user.creditsRemaining <= 0) {
@@ -143,9 +142,6 @@ export function useResumeAnalysis() {
         setError(null);
         setNeedsLogin(false);
 
-        // Track if we decremented credit (for rollback on failure)
-        let creditDecremented = false;
-
         try {
             // Parse resume if not already parsed
             let text = resumeText;
@@ -156,19 +152,7 @@ export function useResumeAnalysis() {
                 }
             }
 
-            // DECREMENT CREDIT BEFORE API CALL (for anonymous users only)
-            if (!isAuthenticated) {
-                creditDecremented = decrementAnonymousCredit();
-                if (!creditDecremented) {
-                    setNeedsLogin(true);
-                    setError('No credits remaining. Please sign in to continue.');
-                    return;
-                }
-                // Update local state immediately
-                setRemainingCredits(getRemainingCredits());
-            }
-
-            // SEND isAnonymous FLAG TO BACKEND
+            // SEND REQUEST TO BACKEND (backend will handle credit decrement)
             const response = await fetch('/api/analyze', {
                 method: 'POST',
                 headers: {
@@ -181,20 +165,28 @@ export function useResumeAnalysis() {
                 }),
             });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Analysis failed');
+            const data = await response.json();
+
+            // Handle rate limit or credit errors
+            if (response.status === 429) {
+                if (data.needsLogin) {
+                    setNeedsLogin(true);
+                }
+                throw new Error(data.error || 'Rate limit exceeded');
             }
 
-            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || 'Analysis failed');
+            }
 
             if (!data.success) {
                 throw new Error(data.error || 'Analysis failed');
             }
 
+            // SUCCESS - Update UI with results
             setAnalysisResult(data.analysis);
 
-            //UPDATE CREDITS FOR AUTHENTICATED USERS
+            // UPDATE CREDITS FOR AUTHENTICATED USERS
             if (isAuthenticated && data.creditsRemaining !== undefined) {
                 // Update Zustand store
                 updateCredits(data.creditsRemaining);
@@ -209,20 +201,41 @@ export function useResumeAnalysis() {
                 setRemainingCredits(data.creditsRemaining);
 
                 // Show warning if credits are low
-                if (data.creditsRemaining <= 5) {
-                    setError(`Analysis complete! You have ${data.creditsRemaining} credits remaining.`);
+                if (data.creditsRemaining <= 5 && data.creditsRemaining > 0) {
+                    console.log(`Analysis complete! You have ${data.creditsRemaining} credits remaining.`);
                 }
 
                 if (data.creditsRemaining <= 0) {
                     setError('You have used all your credits. Please contact support to get more.');
                 }
             } else if (!isAuthenticated) {
-                // Update anonymous credits display
-                const newCredits = getRemainingCredits();
-                setRemainingCredits(newCredits);
+                // UPDATE ANONYMOUS CREDITS FROM BACKEND RESPONSE
+                if (data.anonymousCreditsRemaining !== undefined) {
+                    // Sync frontend credits with backend
+                    const currentCredits = getRemainingCredits();
+                    const backendCredits = data.anonymousCreditsRemaining;
 
-                if (newCredits <= 0) {
-                    setNeedsLogin(true);
+                    // Update store to match backend
+                    if (currentCredits !== backendCredits) {
+                        // Calculate difference and adjust
+                        const difference = currentCredits - backendCredits;
+                        for (let i = 0; i < difference; i++) {
+                            decrementAnonymousCredit();
+                        }
+                    }
+
+                    setRemainingCredits(backendCredits);
+
+                    if (backendCredits <= 0) {
+                        setNeedsLogin(true);
+                        setError('You have used all 3 free analyses. Please sign in to get 50 credits.');
+                    } else if (backendCredits === 1) {
+                        console.log('You have 1 free analysis remaining. Sign in to get 50 credits!');
+                    }
+                } else {
+                    // Fallback: decrement local credit
+                    decrementAnonymousCredit();
+                    setRemainingCredits(getRemainingCredits());
                 }
             }
 
@@ -230,12 +243,6 @@ export function useResumeAnalysis() {
             const errorMessage = err instanceof Error ? err.message : 'Failed to analyze resume';
             setError(errorMessage);
             console.error('Analysis error:', err);
-
-            // ROLLBACK CREDIT FOR ANONYMOUS USERS ON FAILURE
-            if (!isAuthenticated && creditDecremented) {
-                incrementAnonymousCredit();
-                setRemainingCredits(getRemainingCredits());
-            }
         } finally {
             setIsAnalyzing(false);
         }
@@ -249,7 +256,6 @@ export function useResumeAnalysis() {
         hasCreditsAvailable,
         getRemainingCredits,
         decrementAnonymousCredit,
-        incrementAnonymousCredit,
         updateCredits,
         updateSession,
     ]);
