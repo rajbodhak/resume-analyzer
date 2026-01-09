@@ -80,11 +80,11 @@ export default function UploadPage() {
     }, [isAuthenticated, isMounted]);
 
     return (
-        <div className="min-h-screen bg-[#0a0a0a] px-4 pt-24 pb-12 md:pt-32 md:pb-16">
-            {/* Ambient background */}
+        <div className="container mx-auto px-4 py-6 md:py-8 max-w-7xl">
+
             <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-                <div className="absolute top-1/4 left-1/2 -translate-x-1/2 h-80 w-80 md:h-96 md:w-96 rounded-full bg-blue-500/10 blur-3xl" />
-                <div className="absolute top-1/2 right-1/4 h-64 w-64 md:h-80 md:w-80 rounded-full bg-purple-500/5 blur-3xl" />
+                <div className="absolute top-1/4 left-1/4 h-64 w-64 md:h-96 md:w-96 rounded-full bg-blue-500/5 blur-3xl" />
+                <div className="absolute bottom-1/4 right-1/4 h-64 w-64 md:h-96 md:w-96 rounded-full bg-purple-500/5 blur-3xl" />
             </div>
 
             <div className="container mx-auto max-w-6xl">

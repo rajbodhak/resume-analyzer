@@ -122,12 +122,12 @@ export default function CoverLetterPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#0a0a0a] px-4 py-8"
-            style={{
-                background: "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(120, 180, 255, 0.08), transparent 70%), #0a0a0a",
-            }}
-        >
-            <div className="container mx-auto max-w-7xl">
+        <div className="container mx-auto px-4 py-6 md:py-8 max-w-7xl">
+            <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+                <div className="absolute top-1/4 left-1/4 h-64 w-64 md:h-96 md:w-96 rounded-full bg-blue-500/5 blur-3xl" />
+                <div className="absolute bottom-1/4 right-1/4 h-64 w-64 md:h-96 md:w-96 rounded-full bg-purple-500/5 blur-3xl" />
+            </div>
+            <div className="space-y-4 md:space-y-6">
                 {/* Header */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}

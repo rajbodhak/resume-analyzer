@@ -74,6 +74,7 @@ export default function DashboardPage() {
     if (isLoading) {
         return (
             <div className="container mx-auto px-4 py-8 max-w-7xl">
+
                 <div className="space-y-8">
                     {/* Header Skeleton */}
                     <div className="space-y-2">
@@ -109,6 +110,10 @@ export default function DashboardPage() {
 
     return (
         <div className="container mx-auto px-4 py-8 max-w-7xl">
+            <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+                <div className="absolute top-1/4 left-1/4 h-64 w-64 md:h-96 md:w-96 rounded-full bg-blue-500/5 blur-3xl" />
+                <div className="absolute bottom-1/4 right-1/4 h-64 w-64 md:h-96 md:w-96 rounded-full bg-purple-500/5 blur-3xl" />
+            </div>
             <div className="space-y-8">
                 {/* Header */}
                 <div>
