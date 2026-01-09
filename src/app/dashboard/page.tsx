@@ -2,19 +2,19 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
     FileText,
     TrendingUp,
     Calendar,
     ArrowRight,
-    BarChart3
+    FileCheck,
+    Sparkles,
 } from 'lucide-react';
 import { AnalysisCard } from '@/components/dashboard/AnalysisCard';
 import { AnalysisCardSkeleton } from '@/components/dashboard/AnalysisCardSkeleton';
 import { EmptyAnalysisState } from '@/components/dashboard/EmptyAnalysisState';
-import CoverLetterCard from '@/components/dashboard/CoverLetterCard';
 
 interface DashboardData {
     user: {
@@ -45,7 +45,6 @@ export default function DashboardPage() {
 
     const fetchDashboardData = async () => {
         try {
-            // Replace with your actual API call
             const response = await fetch('/api/dashboard');
             const result = await response.json();
             setData(result);
@@ -109,7 +108,7 @@ export default function DashboardPage() {
     }
 
     return (
-        <div className="container mx-auto px-4 py-8 max-w-7xl ">
+        <div className="container mx-auto px-4 py-8 max-w-7xl">
             <div className="space-y-8">
                 {/* Header */}
                 <div>
@@ -121,10 +120,59 @@ export default function DashboardPage() {
                     </p>
                 </div>
 
+                {/* Quick Actions - Prominent CTAs */}
+                <div className="grid gap-4 md:grid-cols-2">
+                    {/* Analyze Resume CTA */}
+                    <button
+                        onClick={() => router.push('/upload')}
+                        className="group relative overflow-hidden rounded-xl border border-neutral-800 bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent p-6 text-left transition-all hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/10"
+                    >
+                        <div className="relative z-10">
+                            <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-blue-500/20 text-blue-400">
+                                <FileCheck className="h-6 w-6" />
+                            </div>
+                            <h3 className="mb-2 text-xl font-semibold text-white">
+                                Analyze Resume
+                            </h3>
+                            <p className="mb-4 text-sm text-neutral-400">
+                                Get AI-powered insights and improve your resume with instant feedback
+                            </p>
+                            <div className="flex items-center text-sm font-medium text-blue-400 group-hover:translate-x-1 transition-transform">
+                                Start Analysis
+                                <ArrowRight className="ml-2 h-4 w-4" />
+                            </div>
+                        </div>
+                        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                    </button>
+
+                    {/* Generate Cover Letter CTA */}
+                    <button
+                        onClick={() => router.push('/dashboard/cover-letter')}
+                        className="group relative overflow-hidden rounded-xl border border-neutral-800 bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent p-6 text-left transition-all hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/10"
+                    >
+                        <div className="relative z-10">
+                            <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-blue-500/20 text-blue-400">
+                                <Sparkles className="h-6 w-6" />
+                            </div>
+                            <h3 className="mb-2 text-xl font-semibold text-white">
+                                Generate Cover Letter
+                            </h3>
+                            <p className="mb-4 text-sm text-neutral-400">
+                                Create a tailored, professional cover letter in seconds
+                            </p>
+                            <div className="flex items-center text-sm font-medium text-blue-400 group-hover:translate-x-1 transition-transform">
+                                Create Now
+                                <ArrowRight className="ml-2 h-4 w-4" />
+                            </div>
+                        </div>
+                        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                    </button>
+                </div>
+
                 {/* Stats Grid */}
                 <div className="grid gap-4 md:grid-cols-3">
                     {/* Total Analyses */}
-                    <Card>
+                    <Card className="border-neutral-800 bg-neutral-900/50">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -135,15 +183,15 @@ export default function DashboardPage() {
                                         {data?.user.analysesCount || 0}
                                     </p>
                                 </div>
-                                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                                    <FileText className="w-6 h-6 text-primary" />
+                                <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center">
+                                    <FileText className="w-6 h-6 text-blue-400" />
                                 </div>
                             </div>
                         </CardContent>
                     </Card>
 
                     {/* Average Score */}
-                    <Card>
+                    <Card className="border-neutral-800 bg-neutral-900/50">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -155,15 +203,15 @@ export default function DashboardPage() {
                                         <span className="text-xl text-muted-foreground">/100</span>
                                     </p>
                                 </div>
-                                <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center">
-                                    <TrendingUp className="w-6 h-6 text-green-500" />
+                                <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center">
+                                    <TrendingUp className="w-6 h-6 text-blue-400" />
                                 </div>
                             </div>
                         </CardContent>
                     </Card>
 
                     {/* Last Analysis */}
-                    <Card>
+                    <Card className="border-neutral-800 bg-neutral-900/50">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -175,7 +223,7 @@ export default function DashboardPage() {
                                     </p>
                                 </div>
                                 <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center">
-                                    <Calendar className="w-6 h-6 text-blue-500" />
+                                    <Calendar className="w-6 h-6 text-blue-400" />
                                 </div>
                             </div>
                         </CardContent>
@@ -214,26 +262,6 @@ export default function DashboardPage() {
                         </div>
                     )}
                 </div>
-
-                {/* Quick Actions */}
-                <Card className="border-dashed">
-                    <CardContent className="p-6">
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                            <div className="text-center sm:text-left">
-                                <h3 className="font-semibold mb-1">Ready to improve?</h3>
-                                <p className="text-sm text-muted-foreground">
-                                    Analyze another resume and get personalized feedback
-                                </p>
-                            </div>
-                            <Button onClick={() => router.push('/upload')} className="w-full sm:w-auto">
-                                <FileText className="w-4 h-4 mr-2" />
-                                New Analysis
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <CoverLetterCard />
             </div>
         </div>
     );
