@@ -50,7 +50,7 @@ const CTA = () => {
                             className="group gap-2 px-8 py-6 text-base font-semibold"
                             onClick={() => window.location.href = '/upload'}
                         >
-                            <Upload className="size-5" />
+
                             Analyze My Resume Now
                             <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
                         </Button>
