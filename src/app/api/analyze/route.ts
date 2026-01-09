@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { analyzeResume } from '@/lib/ai';
-import { analysisRateLimit } from '@/lib/rate-limit';
+import { analysisRateLimit, anonymousAnalysisLimit } from '@/lib/rate-limit';
 import { validateAnalysisResult } from '@/lib/db-helper';
 import { prisma } from '@/lib/prisma';
 import { isJobMatchResult, isResumeAnalysisResult } from '@/types/analysis';
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        //CHECK CREDITS FOR AUTHENTICATED USERS
+        // CHECK CREDITS AND RATE LIMITS
         if (isAuthenticated && session.user?.id) {
             const userId = session.user.id;
 
@@ -101,8 +101,25 @@ export async function POST(request: NextRequest) {
             }
 
         } else {
-            // Anonymous users - no rate limiting on backend
-            console.log('Anonymous user analysis - no rate limiting applied');
+            // ANONYMOUS USERS - CHECK IP-BASED LIMIT
+            const clientIp = getClientIp(request);
+            console.log('Anonymous analysis from IP:', clientIp);
+
+            const anonymousCheck = anonymousAnalysisLimit.checkAnonymousUser(clientIp);
+
+            if (!anonymousCheck.allowed) {
+                return NextResponse.json(
+                    {
+                        error: anonymousCheck.message || 'Free analysis limit reached. Please sign in to continue.',
+                        remaining: 0,
+                        resetAt: anonymousCheck.resetAt,
+                        needsLogin: true,
+                    },
+                    { status: 429 }
+                );
+            }
+
+            console.log(`Anonymous user has ${anonymousCheck.remaining} analyses remaining`);
         }
 
         // Call AI analysis
@@ -235,12 +252,17 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // For anonymous users - return analysis without saving
+        // For anonymous users - return analysis with remaining credits info
+        const clientIp = getClientIp(request);
+        const anonymousStatus = anonymousAnalysisLimit.getAnonymousStatus(clientIp);
+
         return NextResponse.json({
             success: true,
             analysis: analysisData,
             saved: false,
             message: 'Analysis completed. Sign in to save your analysis history.',
+            anonymousCreditsRemaining: anonymousStatus.remaining,
+            resetAt: anonymousStatus.resetAt,
         });
 
     } catch (error) {

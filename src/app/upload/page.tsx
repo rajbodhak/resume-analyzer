@@ -1,11 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useResumeAnalysis } from '@/hooks/useResumeAnalysis';
 import { UploadSection } from '@/components/upload/UploadSection';
 import { AnalysisResults } from '@/components/upload/AnalysisResults';
-import { AlertCircle, LogIn } from 'lucide-react';
+import { AlertCircle, LogIn, Clock } from 'lucide-react';
 import Link from 'next/link';
 
 export default function UploadPage() {
@@ -27,6 +27,33 @@ export default function UploadPage() {
         resumeText,
     } = useResumeAnalysis();
 
+    const [timeUntilReset, setTimeUntilReset] = useState<string>('');
+
+    // Calculate time until reset for anonymous users
+    useEffect(() => {
+        if (!isAuthenticated && isMounted) {
+            const updateTimer = () => {
+                // Get reset time from localStorage if available
+                const authStorage = localStorage.getItem('auth-storage');
+                if (authStorage) {
+                    try {
+                        const parsed = JSON.parse(authStorage);
+                        // You can add resetAt to your store if needed
+                        // For now, we'll just show a generic message
+                        setTimeUntilReset('24 hours after first use');
+                    } catch (e) {
+                        setTimeUntilReset('');
+                    }
+                }
+            };
+
+            updateTimer();
+            const interval = setInterval(updateTimer, 60000); // Update every minute
+
+            return () => clearInterval(interval);
+        }
+    }, [isAuthenticated, isMounted]);
+
     return (
         <div className="min-h-screen bg-[#0a0a0a] px-4 py-12 md:mt-6 md:px-6">
             <div className="container mx-auto max-w-6xl">
@@ -44,32 +71,50 @@ export default function UploadPage() {
                     </p>
 
                     {/* Credit Counter - Shows for BOTH anonymous and authenticated users */}
-                    {isMounted && (
+                    {isMounted && remainingCredits >= 0 && (
                         <motion.div
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ delay: 0.2 }}
-                            className="mt-4 inline-flex items-center gap-2 rounded-full bg-blue-500/10 px-4 py-2 text-sm font-medium text-blue-400 border border-blue-500/20"
+                            className="mt-4 inline-flex flex-col items-center gap-2"
                         >
-                            <AlertCircle className="h-4 w-4" />
-                            <span>
-                                {isAuthenticated ? (
-                                    // Authenticated user - show actual credits
-                                    remainingCredits > 0 ? (
-                                        `${remainingCredits} ${remainingCredits === 1 ? 'credit' : 'credits'} remaining`
+                            <div className="inline-flex items-center gap-2 rounded-full bg-blue-500/10 px-4 py-2 text-sm font-medium text-blue-400 border border-blue-500/20">
+                                <AlertCircle className="h-4 w-4" />
+                                <span>
+                                    {isAuthenticated ? (
+                                        // Authenticated user - show actual credits
+                                        remainingCredits > 0 ? (
+                                            `${remainingCredits} ${remainingCredits === 1 ? 'credit' : 'credits'} remaining`
+                                        ) : (
+                                            'No credits remaining'
+                                        )
                                     ) : (
-                                        'No credits remaining'
-                                    )
-                                ) : (
-                                    // Anonymous user - show free analyses
-                                    remainingCredits > 0 ? (
-                                        `${remainingCredits} free ${remainingCredits === 1 ? 'analysis' : 'analyses'} remaining`
-                                    ) : (
-                                        'No free analyses remaining'
-                                    )
-                                )}
-                            </span>
+                                        // Anonymous user - show free analyses
+                                        remainingCredits > 0 ? (
+                                            `${remainingCredits} free ${remainingCredits === 1 ? 'analysis' : 'analyses'} remaining`
+                                        ) : (
+                                            'No free analyses remaining'
+                                        )
+                                    )}
+                                </span>
+                            </div>
+
+                            {/* Reset Timer for Anonymous Users */}
+                            {!isAuthenticated && remainingCredits < 3 && timeUntilReset && (
+                                <div className="flex items-center gap-1.5 text-xs text-neutral-500">
+                                    <Clock className="h-3 w-3" />
+                                    <span>Resets {timeUntilReset}</span>
+                                </div>
+                            )}
                         </motion.div>
+                    )}
+
+                    {/* Loading state for credits */}
+                    {!isMounted && (
+                        <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-neutral-800/50 px-4 py-2 text-sm text-neutral-500">
+                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-600 border-t-transparent" />
+                            <span>Loading credits...</span>
+                        </div>
                     )}
                 </motion.div>
 
