@@ -33,7 +33,7 @@ export default function CoverLetterCard() {
                     </p>
                     <Link href="/dashboard/cover-letter">
                         <Button className="w-full sm:w-auto">
-                            ✨ Create Cover Letter
+                            Create Cover Letter
                         </Button>
                     </Link>
                 </div>
