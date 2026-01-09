@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Upload, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const Hero = () => {
@@ -65,7 +65,7 @@ const Hero = () => {
                         className="group relative overflow-hidden bg-gradient-to-r from-blue-500 to-blue-600 px-8 py-6 text-base font-semibold hover:from-blue-600 hover:to-blue-700"
                         onClick={() => window.location.href = '/upload'}
                     >
-                        <Upload className="mr-2 h-5 w-5 transition-transform group-hover:scale-110" />
+
                         Analyze My Resume
                     </Button>
                     <Button
