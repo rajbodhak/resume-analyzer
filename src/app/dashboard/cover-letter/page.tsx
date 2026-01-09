@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import CoverLetterForm from '@/components/upload/CoverLetterForm';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Loader2, Copy, Download, ArrowLeft, CheckCircle, Sparkles } from 'lucide-react';
+import { Loader2, Copy, Download, CheckCircle, FileText } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function CoverLetterPage() {
@@ -122,26 +122,24 @@ export default function CoverLetterPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#0a0a0a]"
+        <div className="min-h-screen bg-[#0a0a0a] px-4 py-8"
             style={{
-                background: "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(120, 180, 255, 0.15), transparent 70%), #0a0a0a",
+                background: "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(120, 180, 255, 0.08), transparent 70%), #0a0a0a",
             }}
         >
-            <div className="container mx-auto px-4 py-8 max-w-7xl">
+            <div className="container mx-auto max-w-7xl">
                 {/* Header */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mb-12"
+                    className="mb-8 text-center"
                 >
-                    <div className="text-center">
-                        <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white">
-                            Generate <span className="text-blue-400">Cover Letter</span>
-                        </h1>
-                        <p className="text-neutral-400 text-lg">
-                            AI-powered cover letters tailored to your resume and job description
-                        </p>
-                    </div>
+                    <h1 className="text-4xl md:text-5xl font-bold mb-3 text-white">
+                        Generate <span className="text-blue-400">Cover Letter</span>
+                    </h1>
+                    <p className="text-neutral-400 text-lg">
+                        AI-powered cover letters tailored to your resume and job description
+                    </p>
                 </motion.div>
 
                 <div className="grid gap-6 lg:grid-cols-2">
@@ -156,6 +154,7 @@ export default function CoverLetterPage() {
                                 onGenerate={handleGenerate}
                                 isGenerating={isGenerating}
                                 prefilledResume={prefilledResume}
+                                disabled={isGenerating}
                             />
                         </Card>
                     </motion.div>
@@ -175,19 +174,23 @@ export default function CoverLetterPage() {
 
                             {isGenerating && (
                                 <div className="flex-1 flex flex-col items-center justify-center text-center">
-                                    <div className="relative">
-                                        <Loader2 className="w-12 h-12 animate-spin text-blue-400 mb-4" />
-                                        <Sparkles className="w-6 h-6 text-blue-300 absolute top-0 right-0 animate-pulse" />
+                                    <div className="relative mb-6">
+                                        {/* Animated circle */}
+                                        <div className="w-20 h-20 rounded-full border-4 border-blue-500/20 border-t-blue-400 animate-spin" />
+                                        {/* Center icon */}
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                            <FileText className="w-8 h-8 text-blue-400" />
+                                        </div>
                                     </div>
-                                    <p className="text-white font-medium">Generating your cover letter...</p>
+                                    <p className="text-white font-medium text-lg">Generating your cover letter...</p>
                                     <p className="text-neutral-500 text-sm mt-2">This may take a few seconds</p>
                                 </div>
                             )}
 
                             {!isGenerating && !coverLetter && !error && (
                                 <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-                                    <div className="w-20 h-20 bg-neutral-800/50 rounded-full flex items-center justify-center mb-4 border border-neutral-700">
-                                        <Sparkles className="w-10 h-10 text-neutral-600" />
+                                    <div className="w-20 h-20 bg-blue-500/10 rounded-full flex items-center justify-center mb-4 border border-blue-500/20">
+                                        <FileText className="w-10 h-10 text-blue-400" />
                                     </div>
                                     <h3 className="text-lg font-semibold text-white mb-2">
                                         Ready to Generate

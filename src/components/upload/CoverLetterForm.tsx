@@ -106,7 +106,7 @@ export default function CoverLetterForm({ onGenerate, isGenerating, disabled, pr
         <div className="space-y-5">
             {/* Name Input */}
             <div className="space-y-2">
-                <Label htmlFor="candidateName" className="text-neutral-300 text-sm">
+                <Label htmlFor="candidateName" className="text-neutral-300 text-sm font-medium">
                     Your Name <span className="text-red-400">*</span>
                 </Label>
                 <Input
@@ -116,13 +116,13 @@ export default function CoverLetterForm({ onGenerate, isGenerating, disabled, pr
                     value={formData.candidateName}
                     onChange={handleChange}
                     disabled={disabled}
-                    className="bg-neutral-800 border-neutral-700 text-white placeholder:text-neutral-500 focus:border-blue-400 focus:bg-neutral-800 disabled:bg-neutral-800 disabled:opacity-50"
+                    className="bg-neutral-800 border-neutral-700 text-white placeholder:text-neutral-500 focus:border-blue-400 focus:ring-blue-400/20 disabled:opacity-50"
                 />
             </div>
 
             {/* Company Name */}
             <div className="space-y-2">
-                <Label htmlFor="companyName" className="text-neutral-300 text-sm">
+                <Label htmlFor="companyName" className="text-neutral-300 text-sm font-medium">
                     Company Name <span className="text-red-400">*</span>
                 </Label>
                 <Input
@@ -132,13 +132,13 @@ export default function CoverLetterForm({ onGenerate, isGenerating, disabled, pr
                     value={formData.companyName}
                     onChange={handleChange}
                     disabled={disabled}
-                    className="bg-neutral-800 border-neutral-700 text-white placeholder:text-neutral-500 focus:border-blue-400 focus:bg-neutral-800 disabled:bg-neutral-800 disabled:opacity-50"
+                    className="bg-neutral-800 border-neutral-700 text-white placeholder:text-neutral-500 focus:border-blue-400 focus:ring-blue-400/20 disabled:opacity-50"
                 />
             </div>
 
             {/* Position Title */}
             <div className="space-y-2">
-                <Label htmlFor="positionTitle" className="text-neutral-300 text-sm">
+                <Label htmlFor="positionTitle" className="text-neutral-300 text-sm font-medium">
                     Position Title <span className="text-red-400">*</span>
                 </Label>
                 <Input
@@ -148,17 +148,17 @@ export default function CoverLetterForm({ onGenerate, isGenerating, disabled, pr
                     value={formData.positionTitle}
                     onChange={handleChange}
                     disabled={disabled}
-                    className="bg-neutral-800 border-neutral-700 text-white placeholder:text-neutral-500 focus:border-blue-400 focus:bg-neutral-800 disabled:bg-neutral-800 disabled:opacity-50"
+                    className="bg-neutral-800 border-neutral-700 text-white placeholder:text-neutral-500 focus:border-blue-400 focus:ring-blue-400/20 disabled:opacity-50"
                 />
             </div>
 
-            {/* Resume Upload - Simplified */}
+            {/* Resume Upload */}
             <div className="space-y-2">
-                <Label htmlFor="resumeFile" className="text-neutral-300 text-sm">
+                <Label htmlFor="resumeFile" className="text-neutral-300 text-sm font-medium">
                     Resume / CV <span className="text-red-400">*</span>
                 </Label>
 
-                <div className="flex items-center gap-3 p-3 border border-neutral-700 rounded-lg bg-neutral-800/50">
+                <div className="flex items-center gap-3 p-3 border border-neutral-700 rounded-lg bg-neutral-800/50 hover:bg-neutral-800/70 transition-colors">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                         <FileText className="w-5 h-5 text-blue-400 flex-shrink-0" />
                         <span className="text-sm text-neutral-400 truncate">
@@ -174,9 +174,9 @@ export default function CoverLetterForm({ onGenerate, isGenerating, disabled, pr
                                 size="sm"
                                 onClick={removeFile}
                                 disabled={disabled || isParsing}
-                                className=" h-8 px-2"
+                                className="h-8 px-2 hover:bg-neutral-700"
                             >
-                                <X className="w-4 h-4 text-neutral-400" />
+                                <X className="w-4 h-4 text-neutral-400 hover:text-white" />
                             </Button>
                         )}
 
@@ -184,17 +184,14 @@ export default function CoverLetterForm({ onGenerate, isGenerating, disabled, pr
                             type="button"
                             size="sm"
                             disabled={disabled || isParsing}
-                            className="bg-transparent hover:text-blue-400 hover:bg-transparent border border-blue-500 hover:border-blue-200 text-white h-8 px-3 cursor-pointer"
+                            className="bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 hover:border-blue-400 text-blue-400 h-8 px-3"
                             onClick={() => document.getElementById('resumeFile')?.click()}
                         >
                             {isParsing ? (
-                                <>
-                                    <Loader2 className="w-3 h-3 animate-spin mr-1" />
-                                    Parsing...
-                                </>
+                                <Loader2 className="w-3 h-3 animate-spin" />
                             ) : (
                                 <>
-                                    <Upload className="w-3 h-3 mr-1" />
+                                    <Upload className="w-3 h-3 mr-1.5" />
                                     Upload
                                 </>
                             )}
@@ -213,12 +210,14 @@ export default function CoverLetterForm({ onGenerate, isGenerating, disabled, pr
                 <p className="text-xs text-neutral-500">PDF or DOCX (max 5MB)</p>
 
                 {parseError && (
-                    <p className="text-xs text-red-400">{parseError}</p>
+                    <div className="p-2 rounded bg-red-500/10 border border-red-500/20">
+                        <p className="text-xs text-red-400">{parseError}</p>
+                    </div>
                 )}
 
                 {!resumeFile && (
                     <div className="mt-3">
-                        <Label htmlFor="resumeText" className="text-xs text-neutral-500">
+                        <Label htmlFor="resumeText" className="text-xs text-neutral-500 font-normal">
                             Or paste your resume text manually:
                         </Label>
                         <Textarea
@@ -229,7 +228,7 @@ export default function CoverLetterForm({ onGenerate, isGenerating, disabled, pr
                             onChange={handleChange}
                             rows={4}
                             disabled={disabled || isParsing}
-                            className="resize-none mt-1 bg-neutral-800 border-neutral-700 text-white placeholder:text-neutral-500 focus:border-blue-400 focus:bg-neutral-800 disabled:bg-neutral-800 disabled:opacity-50"
+                            className="resize-none mt-1 bg-neutral-800 border-neutral-700 text-white placeholder:text-neutral-500 focus:border-blue-400 focus:ring-blue-400/20 disabled:opacity-50"
                         />
                     </div>
                 )}
@@ -237,7 +236,7 @@ export default function CoverLetterForm({ onGenerate, isGenerating, disabled, pr
 
             {/* Job Description */}
             <div className="space-y-2">
-                <Label htmlFor="jobDescription" className="text-neutral-300 text-sm">
+                <Label htmlFor="jobDescription" className="text-neutral-300 text-sm font-medium">
                     Job Description <span className="text-red-400">*</span>
                 </Label>
                 <Textarea
@@ -248,30 +247,23 @@ export default function CoverLetterForm({ onGenerate, isGenerating, disabled, pr
                     onChange={handleChange}
                     rows={5}
                     disabled={disabled}
-                    className="resize-none bg-neutral-800 border-neutral-700 text-white placeholder:text-neutral-500 focus:border-blue-400 focus:bg-neutral-800 disabled:bg-neutral-800 disabled:opacity-50"
+                    className="resize-none bg-neutral-800 border-neutral-700 text-white placeholder:text-neutral-500 focus:border-blue-400 focus:ring-blue-400/20 disabled:opacity-50"
                 />
             </div>
 
             {/* Submit Button */}
             <Button
                 onClick={handleSubmit}
-                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-6"
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-6 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 disabled={!isFormValid || isGenerating || disabled || isParsing}
             >
-                {isGenerating ? (
+                {isGenerating || isParsing ? (
                     <>
                         <Loader2 className="animate-spin mr-2 h-5 w-5" />
-                        Generating...
-                    </>
-                ) : isParsing ? (
-                    <>
-                        <Loader2 className="animate-spin mr-2 h-5 w-5" />
-                        Parsing Resume...
+                        {isParsing ? 'Parsing Resume...' : 'Generating...'}
                     </>
                 ) : (
-                    <>
-                        Generate Cover Letter
-                    </>
+                    'Generate Cover Letter'
                 )}
             </Button>
         </div>
