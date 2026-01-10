@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import CoverLetterForm from '@/components/upload/CoverLetterForm';
+import CoverLetterPageSkeleton from '@/components/dashboard/CoverLetterPageSkeleton';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Loader2, Copy, Download, CheckCircle, FileText } from 'lucide-react';
@@ -114,11 +115,7 @@ export default function CoverLetterPage() {
     };
 
     if (status === 'loading') {
-        return (
-            <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
-            </div>
-        );
+        return <CoverLetterPageSkeleton />;
     }
 
     return (
