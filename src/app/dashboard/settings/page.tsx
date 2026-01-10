@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Check, AlertCircle } from 'lucide-react';
 import AccountOverview from '@/components/settings/AccountOverview';
 import ProfileForm from '@/components/settings/ProfileForm';
+import SettingsPageSkeleton from '@/components/settings/SettingsPageSkeleton';
 
 interface UserProfile {
     name: string;
@@ -116,23 +117,7 @@ export default function SettingsPage() {
     };
 
     if (isLoading) {
-        return (
-            <div className="container mx-auto px-4 py-8 max-w-4xl">
-                <div className="space-y-6">
-                    <div className="h-8 bg-neutral-800 rounded animate-pulse w-1/3" />
-                    <Card className="border-neutral-800 bg-neutral-900/50">
-                        <CardContent className="p-6 space-y-4">
-                            {[1, 2, 3, 4, 5].map((i) => (
-                                <div key={i} className="space-y-2">
-                                    <div className="h-4 bg-neutral-800 rounded animate-pulse w-1/4" />
-                                    <div className="h-10 bg-neutral-800 rounded animate-pulse" />
-                                </div>
-                            ))}
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-        );
+        return <SettingsPageSkeleton />;
     }
 
     return (
