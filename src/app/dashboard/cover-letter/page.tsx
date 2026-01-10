@@ -43,7 +43,7 @@ export default function CoverLetterPage() {
 
         while (retryCount < maxRetries) {
             try {
-                const response = await fetch('/api/generate-cover-letter', {
+                const response = await fetch('/api/cover-letter', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

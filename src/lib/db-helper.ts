@@ -1,6 +1,10 @@
 import { prisma } from './prisma';
 import { AnalysisResult, isJobMatchResult, isResumeAnalysisResult } from '@/types/analysis';
 
+// ============================================
+// ANALYSIS FUNCTIONS
+// ============================================
+
 interface SaveAnalysisParams {
     userId: string;
     resumeText: string;
@@ -206,6 +210,175 @@ export async function getAnalysisById(analysisId: string, userId: string) {
         return {
             success: false,
             error: 'Failed to fetch analysis',
+        };
+    }
+}
+
+// ============================================
+// COVER LETTER FUNCTIONS
+// ============================================
+
+interface SaveCoverLetterParams {
+    userId: string;
+    companyName: string;
+    positionTitle: string;
+    content: string;
+    jobDescription: string;
+}
+
+interface SaveCoverLetterResponse {
+    success: boolean;
+    coverLetterId?: string;
+    error?: string;
+}
+
+/**
+ * Saves a generated cover letter to the database
+ */
+export async function saveCoverLetterToDatabase(
+    params: SaveCoverLetterParams
+): Promise<SaveCoverLetterResponse> {
+    const { userId, companyName, positionTitle, content, jobDescription } = params;
+
+    try {
+        // Validate inputs
+        if (!userId || !companyName || !positionTitle || !content) {
+            return {
+                success: false,
+                error: 'Missing required fields',
+            };
+        }
+
+        // Limit content length to prevent database issues
+        const truncatedJobDesc = jobDescription.substring(0, 5000);
+        const truncatedContent = content.substring(0, 20000);
+
+        // Save to database
+        const savedCoverLetter = await prisma.coverLetter.create({
+            data: {
+                userId,
+                companyName: companyName.trim(),
+                positionTitle: positionTitle.trim(),
+                content: truncatedContent,
+                jobDescription: truncatedJobDesc,
+            },
+        });
+
+        console.log(`✅ Cover letter saved: ${savedCoverLetter.id}`);
+
+        return {
+            success: true,
+            coverLetterId: savedCoverLetter.id,
+        };
+    } catch (error) {
+        console.error('❌ Failed to save cover letter:', error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Failed to save cover letter',
+        };
+    }
+}
+
+/**
+ * Retrieves cover letter history for a user
+ */
+export async function getUserCoverLetters(userId: string, limit: number = 20) {
+    try {
+        const coverLetters = await prisma.coverLetter.findMany({
+            where: { userId },
+            orderBy: { createdAt: 'desc' },
+            take: limit,
+            select: {
+                id: true,
+                companyName: true,
+                positionTitle: true,
+                content: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        });
+
+        return {
+            success: true,
+            coverLetters,
+            total: coverLetters.length,
+        };
+    } catch (error) {
+        console.error('❌ Error fetching cover letters:', error);
+        return {
+            success: false,
+            error: 'Failed to fetch cover letters',
+            coverLetters: [],
+            total: 0,
+        };
+    }
+}
+
+/**
+ * Retrieves a single cover letter by ID
+ */
+export async function getCoverLetterById(coverLetterId: string, userId: string) {
+    try {
+        const coverLetter = await prisma.coverLetter.findFirst({
+            where: {
+                id: coverLetterId,
+                userId, // Ensure user owns this cover letter
+            },
+        });
+
+        if (!coverLetter) {
+            return {
+                success: false,
+                error: 'Cover letter not found',
+            };
+        }
+
+        return {
+            success: true,
+            coverLetter,
+        };
+    } catch (error) {
+        console.error('❌ Error fetching cover letter:', error);
+        return {
+            success: false,
+            error: 'Failed to fetch cover letter',
+        };
+    }
+}
+
+/**
+ * Deletes a cover letter
+ */
+export async function deleteCoverLetter(coverLetterId: string, userId: string) {
+    try {
+        // First verify the cover letter belongs to the user
+        const coverLetter = await prisma.coverLetter.findFirst({
+            where: {
+                id: coverLetterId,
+                userId,
+            },
+        });
+
+        if (!coverLetter) {
+            return {
+                success: false,
+                error: 'Cover letter not found or unauthorized',
+            };
+        }
+
+        // Delete the cover letter
+        await prisma.coverLetter.delete({
+            where: { id: coverLetterId },
+        });
+
+        return {
+            success: true,
+        };
+    } catch (error) {
+        console.error('❌ Error deleting cover letter:', error);
+        return {
+            success: false,
+            error: 'Failed to delete cover letter',
         };
     }
 }
