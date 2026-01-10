@@ -27,7 +27,7 @@ export interface NavbarProps {
 export default function Navbar({
     logo = <Logo />,
     logoHref = '/',
-    logoText = 'Resume Analyzer',
+    logoText = 'Rezumify',
     className = '',
     isAuthenticated = false,
     userName = 'User',

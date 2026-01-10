@@ -42,7 +42,7 @@ export default function NavbarWrapper() {
 
     return (
         <Navbar
-            logoText="Resume Analyzer"
+            logoText="Rezumify"
             logoHref="/"
             isAuthenticated={isAuthenticated}
             userName={userName}
