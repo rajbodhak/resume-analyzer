@@ -20,9 +20,9 @@ export default function HistoryPageSkeleton() {
                     <div className="h-10 bg-neutral-800/50 rounded-lg animate-pulse w-full sm:w-36" />
                 </div>
 
-                {/* Stats Skeleton */}
-                <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-3">
-                    {[1, 2, 3].map((i) => (
+                {/* Stats Skeleton - Updated to 4 columns */}
+                <div className="grid gap-3 md:gap-4 grid-cols-2 sm:grid-cols-4">
+                    {[1, 2, 3, 4].map((i) => (
                         <div key={i} className="h-20 md:h-24 bg-neutral-800/50 rounded-xl animate-pulse" />
                     ))}
                 </div>
@@ -30,7 +30,7 @@ export default function HistoryPageSkeleton() {
                 {/* Filters Skeleton */}
                 <div className="flex flex-col sm:flex-row gap-3">
                     <div className="h-10 bg-neutral-800/50 rounded-lg animate-pulse flex-1" />
-                    <div className="h-10 bg-neutral-800/50 rounded-lg animate-pulse w-full sm:w-44" />
+                    <div className="h-10 bg-neutral-800/50 rounded-lg animate-pulse w-full sm:w-48" />
                     <div className="h-10 bg-neutral-800/50 rounded-lg animate-pulse w-full sm:w-44" />
                 </div>
 
@@ -40,9 +40,9 @@ export default function HistoryPageSkeleton() {
                     <div className="h-4 bg-neutral-800/50 rounded animate-pulse w-32 md:w-40" />
                 </div>
 
-                {/* Analysis Cards Skeleton */}
-                <div className="space-y-3 md:space-y-4">
-                    {[1, 2, 3].map((i) => (
+                {/* Compact Analysis Cards Skeleton */}
+                <div className="space-y-3">
+                    {[1, 2, 3, 4, 5].map((i) => (
                         <AnalysisCardSkeleton key={i} />
                     ))}
                 </div>

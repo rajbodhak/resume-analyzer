@@ -16,8 +16,6 @@ import {
     Eye,
     Trash2,
     Calendar,
-    Target,
-    FileCheck
 } from 'lucide-react';
 
 interface AnalysisCardProps {
@@ -36,18 +34,12 @@ interface AnalysisCardProps {
 
 export function AnalysisCard({ analysis, onViewDetails, onDelete }: AnalysisCardProps) {
     const isJobMatch = analysis.analysisType === 'job-match';
-    const hasJobDescription = analysis.jobDescription && analysis.jobDescription.trim().length > 0;
+    const score = isJobMatch ? analysis.compatibilityScore : analysis.overallScore;
 
     const getScoreColor = (score: number) => {
         if (score >= 80) return 'text-green-500';
         if (score >= 60) return 'text-yellow-500';
         return 'text-red-500';
-    };
-
-    const getScoreBadgeVariant = (score: number): 'default' | 'secondary' | 'destructive' => {
-        if (score >= 80) return 'default';
-        if (score >= 60) return 'secondary';
-        return 'destructive';
     };
 
     const formatDate = (date: Date | string) => {
@@ -67,119 +59,72 @@ export function AnalysisCard({ analysis, onViewDetails, onDelete }: AnalysisCard
     };
 
     return (
-        <Card
-            className="hover:border-primary/50 transition-all duration-200 cursor-pointer group"
-            onClick={() => onViewDetails(analysis.id)}
-        >
-            <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-4">
-                    <div className="flex gap-3 flex-1 min-w-0">
-                        <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${isJobMatch
-                                ? 'bg-primary/10 text-primary'
-                                : 'bg-blue-500/10 text-blue-500'
+        <Card className="hover:border-primary/50 transition-all duration-200 group">
+            <CardContent className="p-3">
+                <div className="flex items-center gap-3">
+                    {/* Icon */}
+                    <div className="flex-shrink-0">
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isJobMatch ? 'bg-primary/10' : 'bg-blue-500/10'
                             }`}>
                             {isJobMatch ? (
-                                <Briefcase className="w-5 h-5" />
+                                <Briefcase className={`w-5 h-5 ${isJobMatch ? 'text-primary' : 'text-blue-500'}`} />
                             ) : (
-                                <FileText className="w-5 h-5" />
+                                <FileText className="w-5 h-5 text-blue-500" />
                             )}
                         </div>
+                    </div>
 
-                        <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                                <h3 className="font-medium text-foreground truncate">
-                                    {analysis.originalFileName || 'Resume Analysis'}
-                                </h3>
-                                <Badge
-                                    variant="outline"
-                                    className="flex-shrink-0 text-xs"
-                                >
-                                    {isJobMatch ? 'Job Match' : 'Resume Review'}
-                                </Badge>
-                            </div>
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-medium text-sm text-foreground truncate">
+                                {analysis.originalFileName || 'Resume Analysis'}
+                            </h3>
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
+                                {isJobMatch ? 'Job Match' : 'Review'}
+                            </Badge>
+                        </div>
 
-                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-3">
+                        <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+                            <div className="flex items-center gap-1">
                                 <Calendar className="w-3 h-3" />
                                 <span>{formatDate(analysis.createdAt)}</span>
                             </div>
-
-                            <div className="flex items-center gap-4">
-                                <div className="flex items-center gap-2">
-                                    <Target className="w-4 h-4 text-muted-foreground" />
-                                    <div className="flex items-baseline gap-1">
-                                        <span className={`text-lg font-bold ${getScoreColor(
-                                            isJobMatch ? analysis.compatibilityScore : analysis.overallScore
-                                        )}`}>
-                                            {isJobMatch ? analysis.compatibilityScore : analysis.overallScore}
-                                        </span>
-                                        <span className="text-xs text-muted-foreground">/100</span>
-                                    </div>
-                                </div>
-
-                                {isJobMatch && (
-                                    <div className="flex items-center gap-2">
-                                        <FileCheck className="w-4 h-4 text-muted-foreground" />
-                                        <div className="flex items-baseline gap-1">
-                                            <span className="text-sm font-semibold text-foreground">
-                                                {analysis.overallScore}
-                                            </span>
-                                            <span className="text-xs text-muted-foreground">ATS</span>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {hasJobDescription && !isJobMatch && (
-                                    <Badge variant="secondary" className="text-xs">
-                                        With JD
-                                    </Badge>
-                                )}
+                            <div className="flex items-center gap-1">
+                                <span className="text-muted-foreground">Score:</span>
+                                <span className={`font-semibold ${getScoreColor(score)}`}>
+                                    {score}/100
+                                </span>
                             </div>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                        <Badge
-                            variant={getScoreBadgeVariant(
-                                isJobMatch ? analysis.compatibilityScore : analysis.overallScore
-                            )}
-                            className="hidden sm:flex"
-                        >
-                            {isJobMatch ? analysis.compatibilityScore : analysis.overallScore}
-                        </Badge>
-
+                    {/* Actions */}
+                    <div className="flex items-center gap-1 flex-shrink-0">
                         <Button
                             variant="ghost"
                             size="sm"
-                            className="opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onViewDetails(analysis.id);
-                            }}
+                            className="h-8 text-xs"
+                            onClick={() => onViewDetails(analysis.id)}
                         >
-                            <Eye className="w-4 h-4 mr-1" />
+                            <Eye className="w-3.5 h-3.5 mr-1" />
                             View
                         </Button>
 
                         {onDelete && (
                             <DropdownMenu>
-                                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon" className="h-8 w-8">
                                         <MoreVertical className="w-4 h-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={(e) => {
-                                        e.stopPropagation();
-                                        onViewDetails(analysis.id);
-                                    }}>
+                                    <DropdownMenuItem onClick={() => onViewDetails(analysis.id)}>
                                         <Eye className="w-4 h-4 mr-2" />
                                         View Details
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onDelete(analysis.id);
-                                        }}
+                                        onClick={() => onDelete(analysis.id)}
                                         className="text-destructive focus:text-destructive"
                                     >
                                         <Trash2 className="w-4 h-4 mr-2" />
