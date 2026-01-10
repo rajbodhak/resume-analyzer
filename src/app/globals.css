@@ -121,6 +121,51 @@
   }
 }
 
+/* Fix scrollbar jump issue - Desktop only */
+@media (min-width: 768px) {
+  html {
+    overflow-y: scroll !important; /* Always show scrollbar space on desktop */
+    scrollbar-gutter: stable; /* Reserve space for scrollbar */
+  }
+  
+  /* Prevent Radix UI from adding padding when modal/dropdown opens */
+  body[style*="padding-right"] {
+    padding-right: 0 !important;
+  }
+  
+  /* Prevent layout shift */
+  body {
+    overflow-x: hidden !important;
+  }
+}
+
+/* Custom scrollbar styling for dark theme - Desktop only */
+@media (min-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 12px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #0a0a0a;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #27272a;
+    border-radius: 6px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #3f3f46;
+  }
+
+  /* Firefox scrollbar */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #27272a #0a0a0a;
+  }
+}
+
+
 @theme inline {
   --animate-cell-ripple: cell-ripple var(--duration, 200ms) ease-out none 1
   var(--delay, 0ms);

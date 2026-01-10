@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { Logo } from '../navbar/Logo';
 import { UserMenu } from '../navbar/UserMenu';
 import { SignOutModal } from '../navbar/SignOutModal';
+import { cn } from '@/lib/utils';
 
 export interface NavbarProps {
     logo?: React.ReactNode;
@@ -39,6 +41,7 @@ export default function Navbar({
     onCoverLetterClick,
 }: NavbarProps) {
     const [showSignOutModal, setShowSignOutModal] = useState(false);
+    const pathname = usePathname();
 
     const handleSignOutClick = () => {
         setShowSignOutModal(true);
@@ -47,6 +50,14 @@ export default function Navbar({
     const handleSignOutConfirm = () => {
         setShowSignOutModal(false);
         onSignOutClick?.();
+    };
+
+    // Helper function to check if link is active
+    const isActive = (path: string) => {
+        if (path === '/dashboard') {
+            return pathname === '/dashboard';
+        }
+        return pathname?.startsWith(path);
     };
 
     return (
@@ -70,19 +81,34 @@ export default function Navbar({
                                 <nav className="hidden md:flex items-center gap-1">
                                     <button
                                         onClick={onDashboardClick}
-                                        className="text-sm font-medium px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+                                        className={cn(
+                                            "text-sm font-medium px-3 py-2 rounded-md transition-colors",
+                                            isActive('/dashboard')
+                                                ? " text-blue-400"
+                                                : "hover:bg-accent hover:text-accent-foreground"
+                                        )}
                                     >
                                         Dashboard
                                     </button>
                                     <button
                                         onClick={onHistoryClick}
-                                        className="text-sm font-medium px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+                                        className={cn(
+                                            "text-sm font-medium px-3 py-2 rounded-md transition-colors",
+                                            isActive('/dashboard/history')
+                                                ? " text-blue-400"
+                                                : "hover:bg-accent hover:text-accent-foreground"
+                                        )}
                                     >
                                         History
                                     </button>
                                     <button
                                         onClick={onCoverLetterClick}
-                                        className="text-sm font-medium px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+                                        className={cn(
+                                            "text-sm font-medium px-3 py-2 rounded-md transition-colors",
+                                            isActive('/dashboard/cover-letter')
+                                                ? " text-blue-400"
+                                                : "hover:bg-accent hover:text-accent-foreground"
+                                        )}
                                     >
                                         Cover Letter
                                     </button>
