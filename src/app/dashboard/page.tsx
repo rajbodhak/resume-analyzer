@@ -12,7 +12,7 @@ import {
     Sparkles,
 } from 'lucide-react';
 import { AnalysisCard } from '@/components/dashboard/AnalysisCard';
-import { AnalysisCardSkeleton } from '@/components/dashboard/AnalysisCardSkeleton';
+import DashboardPageSkeleton from '@/components/dashboard/DashboardPageSkeleton';
 import { EmptyAnalysisState } from '@/components/dashboard/EmptyAnalysisState';
 
 interface DashboardData {
@@ -89,20 +89,7 @@ export default function DashboardPage() {
     };
 
     if (isLoading) {
-        return (
-            <div className="container mx-auto px-4 py-6 md:py-8 max-w-7xl">
-                <div className="space-y-4 md:space-y-6">
-                    <div className="h-8 bg-neutral-800/50 rounded animate-pulse w-1/2 md:w-1/3" />
-                    <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2">
-                        {[1, 2].map((i) => <div key={i} className="h-16 bg-neutral-800/50 rounded-xl animate-pulse" />)}
-                    </div>
-                    <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-3">
-                        {[1, 2, 3].map((i) => <div key={i} className="h-20 md:h-24 bg-neutral-800/50 rounded-xl animate-pulse" />)}
-                    </div>
-                    {[1, 2].map((i) => <AnalysisCardSkeleton key={i} />)}
-                </div>
-            </div>
-        );
+        return <DashboardPageSkeleton />;
     }
 
     return (
