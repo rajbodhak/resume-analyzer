@@ -11,19 +11,26 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Search, Filter, FileText, TrendingUp, Calendar, FileCheck } from 'lucide-react';
+import { Search, Filter, FileText, TrendingUp, Calendar, FileCheck, Mail } from 'lucide-react';
 import { AnalysisCard } from '@/components/dashboard/AnalysisCard';
+import { CoverLetterCard } from '@/components/dashboard/CoverLetterCard';
 import HistoryPageSkeleton from '@/components/dashboard/HistoryPageSkeleton';
 import { EmptyAnalysisState } from '@/components/dashboard/EmptyAnalysisState';
 
-interface Analysis {
+interface HistoryItem {
     id: string;
+    type: 'analysis' | 'cover-letter';
     createdAt: string;
-    overallScore: number;
-    compatibilityScore: number;
-    analysisType: string | null;
-    originalFileName: string | null;
-    jobDescription: string;
+    // Analysis fields
+    overallScore?: number;
+    compatibilityScore?: number;
+    analysisType?: string | null;
+    originalFileName?: string | null;
+    jobDescription?: string;
+    // Cover letter fields
+    companyName?: string;
+    positionTitle?: string;
+    content?: string;
 }
 
 const StatCard = ({ icon: Icon, label, value, suffix = '' }: any) => (
@@ -46,79 +53,115 @@ const StatCard = ({ icon: Icon, label, value, suffix = '' }: any) => (
 
 export default function HistoryPage() {
     const router = useRouter();
-    const [analyses, setAnalyses] = useState<Analysis[]>([]);
-    const [filteredAnalyses, setFilteredAnalyses] = useState<Analysis[]>([]);
+    const [items, setItems] = useState<HistoryItem[]>([]);
+    const [filteredItems, setFilteredItems] = useState<HistoryItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [filterType, setFilterType] = useState('all');
     const [sortBy, setSortBy] = useState('recent');
 
     useEffect(() => {
-        fetchAnalyses();
+        fetchHistory();
     }, []);
 
     useEffect(() => {
         applyFiltersAndSort();
-    }, [analyses, searchQuery, filterType, sortBy]);
+    }, [items, searchQuery, filterType, sortBy]);
 
-    const fetchAnalyses = async () => {
+    const fetchHistory = async () => {
         try {
             const response = await fetch('/api/history?limit=100');
             const result = await response.json();
-            if (result.success) setAnalyses(result.analyses);
+            if (result.success) {
+                setItems(result.items || []);
+            }
         } catch (error) {
-            console.error('Failed to fetch analyses:', error);
+            console.error('Failed to fetch history:', error);
         } finally {
             setIsLoading(false);
         }
     };
 
     const applyFiltersAndSort = () => {
-        let filtered = [...analyses];
+        let filtered = [...items];
 
+        // Search filter
         if (searchQuery) {
-            filtered = filtered.filter((a) =>
-                a.originalFileName?.toLowerCase().includes(searchQuery.toLowerCase())
-            );
+            filtered = filtered.filter((item) => {
+                if (item.type === 'analysis') {
+                    return item.originalFileName?.toLowerCase().includes(searchQuery.toLowerCase());
+                } else {
+                    return (
+                        item.companyName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        item.positionTitle?.toLowerCase().includes(searchQuery.toLowerCase())
+                    );
+                }
+            });
         }
 
+        // Type filter
         if (filterType !== 'all') {
-            filtered = filtered.filter((a) => a.analysisType === filterType);
+            if (filterType === 'cover-letter') {
+                filtered = filtered.filter((item) => item.type === 'cover-letter');
+            } else if (filterType === 'analysis') {
+                filtered = filtered.filter((item) => item.type === 'analysis');
+            } else {
+                // Job match or resume analysis
+                filtered = filtered.filter((item) => item.type === 'analysis' && item.analysisType === filterType);
+            }
         }
 
+        // Sort
         filtered.sort((a, b) => {
-            const sortMap: any = {
-                recent: new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-                oldest: new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-                'score-high': b.overallScore - a.overallScore,
-                'score-low': a.overallScore - b.overallScore,
-            };
-            return sortMap[sortBy] || 0;
+            if (sortBy === 'recent') {
+                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+            } else if (sortBy === 'oldest') {
+                return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+            } else if (sortBy === 'score-high' || sortBy === 'score-low') {
+                const scoreA = a.type === 'analysis' ? (a.overallScore || 0) : 0;
+                const scoreB = b.type === 'analysis' ? (b.overallScore || 0) : 0;
+                return sortBy === 'score-high' ? scoreB - scoreA : scoreA - scoreB;
+            }
+            return 0;
         });
 
-        setFilteredAnalyses(filtered);
+        setFilteredItems(filtered);
     };
 
-    const handleDelete = async (id: string) => {
+    const handleDeleteAnalysis = async (id: string) => {
         if (!confirm('Are you sure you want to delete this analysis?')) return;
         try {
             const response = await fetch(`/api/analysis/${id}`, { method: 'DELETE' });
-            if (response.ok) setAnalyses((prev) => prev.filter((a) => a.id !== id));
+            if (response.ok) {
+                setItems((prev) => prev.filter((item) => item.id !== id));
+            }
         } catch (error) {
             console.error('Failed to delete analysis:', error);
         }
     };
 
+    const handleDeleteCoverLetter = async (id: string) => {
+        if (!confirm('Are you sure you want to delete this cover letter?')) return;
+        try {
+            const response = await fetch(`/api/cover-letter/${id}`, { method: 'DELETE' });
+            if (response.ok) {
+                setItems((prev) => prev.filter((item) => item.id !== id));
+            }
+        } catch (error) {
+            console.error('Failed to delete cover letter:', error);
+        }
+    };
+
+    const analyses = items.filter((item) => item.type === 'analysis');
+    const coverLetters = items.filter((item) => item.type === 'cover-letter');
+
     const stats = {
-        total: filteredAnalyses.length,
-        avgScore: filteredAnalyses.length
-            ? Math.round(filteredAnalyses.reduce((acc, a) => acc + a.overallScore, 0) / filteredAnalyses.length)
+        total: items.length,
+        analyses: analyses.length,
+        coverLetters: coverLetters.length,
+        avgScore: analyses.length
+            ? Math.round(analyses.reduce((acc, a) => acc + (a.overallScore || 0), 0) / analyses.length)
             : 0,
-        lastMonth: filteredAnalyses.filter((a) => {
-            const monthAgo = new Date();
-            monthAgo.setMonth(monthAgo.getMonth() - 1);
-            return new Date(a.createdAt) >= monthAgo;
-        }).length,
     };
 
     if (isLoading) {
@@ -136,8 +179,8 @@ export default function HistoryPage() {
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4">
                     <div>
-                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">Analysis History</h1>
-                        <p className="text-sm md:text-base text-neutral-400 mt-1">View and manage all your resume analyses</p>
+                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">History</h1>
+                        <p className="text-sm md:text-base text-neutral-400 mt-1">View all your analyses and cover letters</p>
                     </div>
                     <Button
                         onClick={() => router.push('/upload')}
@@ -149,35 +192,38 @@ export default function HistoryPage() {
                 </div>
 
                 {/* Stats */}
-                {analyses.length > 0 && (
-                    <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-3">
-                        <StatCard icon={FileCheck} label="Total Analyses" value={stats.total} />
-                        <StatCard icon={TrendingUp} label="Average Score" value={stats.avgScore} suffix="/100" />
-                        <StatCard icon={Calendar} label="Last 30 Days" value={stats.lastMonth} />
+                {items.length > 0 && (
+                    <div className="grid gap-3 md:gap-4 grid-cols-2 sm:grid-cols-4">
+                        <StatCard icon={FileCheck} label="Total Items" value={stats.total} />
+                        <StatCard icon={FileText} label="Analyses" value={stats.analyses} />
+                        <StatCard icon={Mail} label="Cover Letters" value={stats.coverLetters} />
+                        <StatCard icon={TrendingUp} label="Avg Score" value={stats.avgScore} suffix="/100" />
                     </div>
                 )}
 
                 {/* Filters */}
-                {analyses.length > 0 && (
+                {items.length > 0 && (
                     <div className="flex flex-col sm:flex-row gap-3">
                         <div className="relative flex-1">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
                             <Input
-                                placeholder="Search by filename..."
+                                placeholder="Search..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="pl-9 bg-neutral-900/50 border-neutral-800 text-white placeholder:text-neutral-500 focus:border-blue-500/50"
                             />
                         </div>
                         <Select value={filterType} onValueChange={setFilterType}>
-                            <SelectTrigger className="w-full sm:w-44 bg-neutral-900/50 border-neutral-800 text-white">
+                            <SelectTrigger className="w-full sm:w-48 bg-neutral-900/50 border-neutral-800 text-white">
                                 <Filter className="w-4 h-4 mr-2 text-neutral-400" />
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent className="bg-neutral-900 border-neutral-800">
                                 <SelectItem value="all">All Types</SelectItem>
-                                <SelectItem value="job-match">Job Match</SelectItem>
-                                <SelectItem value="resume-analysis">Resume Review</SelectItem>
+                                <SelectItem value="analysis">Resume Analyses</SelectItem>
+                                <SelectItem value="job-match">Job Matches</SelectItem>
+                                <SelectItem value="resume-analysis">Resume Reviews</SelectItem>
+                                <SelectItem value="cover-letter">Cover Letters</SelectItem>
                             </SelectContent>
                         </Select>
                         <Select value={sortBy} onValueChange={setSortBy}>
@@ -195,36 +241,44 @@ export default function HistoryPage() {
                 )}
 
                 {/* Results Count */}
-                {analyses.length > 0 && (
+                {items.length > 0 && (
                     <div className="flex items-center gap-2">
                         <div className="h-1 w-1 rounded-full bg-blue-400" />
                         <p className="text-xs md:text-sm text-neutral-400">
-                            Showing <span className="text-white font-semibold">{filteredAnalyses.length}</span> of <span className="text-white font-semibold">{analyses.length}</span>
+                            Showing <span className="text-white font-semibold">{filteredItems.length}</span> of <span className="text-white font-semibold">{items.length}</span>
                         </p>
                     </div>
                 )}
 
                 {/* List */}
-                {analyses.length === 0 ? (
+                {items.length === 0 ? (
                     <EmptyAnalysisState onStartAnalysis={() => router.push('/upload')} />
-                ) : filteredAnalyses.length === 0 ? (
+                ) : filteredItems.length === 0 ? (
                     <div className="text-center py-12 md:py-16 rounded-xl border border-neutral-800 bg-neutral-900/30">
                         <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-neutral-800/50 flex items-center justify-center mx-auto mb-4">
                             <Search className="w-6 h-6 md:w-8 md:h-8 text-neutral-400" />
                         </div>
-                        <p className="text-neutral-400 text-base md:text-lg">No analyses match your filters</p>
+                        <p className="text-neutral-400 text-base md:text-lg">No items match your filters</p>
                         <p className="text-neutral-500 text-xs md:text-sm mt-2">Try adjusting your search or filter criteria</p>
                     </div>
                 ) : (
                     <div className="space-y-3 md:space-y-4">
-                        {filteredAnalyses.map((analysis) => (
-                            <AnalysisCard
-                                key={analysis.id}
-                                analysis={analysis}
-                                onViewDetails={(id) => router.push(`/dashboard/analysis/${id}`)}
-                                onDelete={handleDelete}
-                            />
-                        ))}
+                        {filteredItems.map((item) =>
+                            item.type === 'analysis' ? (
+                                <AnalysisCard
+                                    key={item.id}
+                                    analysis={item as any}
+                                    onViewDetails={(id) => router.push(`/dashboard/analysis/${id}`)}
+                                    onDelete={handleDeleteAnalysis}
+                                />
+                            ) : (
+                                <CoverLetterCard
+                                    key={item.id}
+                                    coverLetter={item as any}
+                                    onDelete={handleDeleteCoverLetter}
+                                />
+                            )
+                        )}
                     </div>
                 )}
             </div>
