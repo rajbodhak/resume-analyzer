@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Upload, FileText, X, Loader2, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react';
+import { Upload, FileText, X, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface UploadSectionProps {
     file: File | null;
@@ -87,13 +87,7 @@ export function UploadSection({
                             Supported formats: PDF, DOC, DOCX (Max 10MB)
                         </CardDescription>
                     </div>
-                    {/*  Show unlimited badge for authenticated users */}
-                    {isAuthenticated && (
-                        <div className="flex items-center gap-1.5 rounded-full bg-green-500/10 px-3 py-1 text-xs font-medium text-green-500 border border-green-500/20">
-                            <Sparkles className="h-3 w-3" />
-                            Unlimited
-                        </div>
-                    )}
+
                 </div>
             </CardHeader>
             <CardContent className="space-y-6">
